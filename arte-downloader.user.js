@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display a link to the MP4 URL of an Arte+7 video
 // @include     http://www.arte.tv/guide/*
-// @version     1.0
+// @version     1.1
 // ==/UserScript==
 
 if ('function' !== GM_xmlhttpRequest) {
@@ -53,7 +53,8 @@ function triggerOnClick(quality){
     method: "GET",
     url: jsonUrl,
     onload: function(response) {
-      parseJsonDocument(response, quality);
+      MP4 = parseJsonDocument(response, quality);
+      window.open(MP4);
     }
   });
 }
@@ -91,10 +92,12 @@ function parseJsonDocument(response, quality){
 
         // Get the video URL using the requested quality.
         if(json["video"]["VSR"][i]["VQU"] === quality) {
-          alert(quality + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
+          console.log(quality + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
+          return(json["video"]["VSR"][i]["VUR"]);
         }
-
       }
     }
+
+    return 0;
   }
 }
