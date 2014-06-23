@@ -18,13 +18,21 @@ if(!GM_Debug) {
   console.log('Debug mode enabled');
 }
 
-// Create a download LQ button.
-var downloadLQButton = document.createElement('input');
-with(downloadLQButton) {
-  setAttribute('value','Download LQ');
+// Create a download SQ button.
+var downloadSQButton = document.createElement('input');
+with(downloadSQButton) {
+  setAttribute('value','Download SQ');
   setAttribute('type','button');
 }
-downloadLQButton.onclick = function() { triggerOnClick('SQ') }; // For Chrome
+downloadSQButton.onclick = function() { triggerOnClick('SQ') }; // For Chrome
+
+// Create a download EQ button.
+var downloadEQButton = document.createElement('input');
+with(downloadEQButton) {
+  setAttribute('value','Download EQ');
+  setAttribute('type','button');
+}
+downloadEQButton.onclick = function() { triggerOnClick('EQ') }; // For Chrome
 
 // Create a download HQ button.
 var downloadHQButton = document.createElement('input');
@@ -35,7 +43,8 @@ with(downloadHQButton) {
 downloadHQButton.onclick = function() { triggerOnClick('HQ') }; // For Chrome
 
 // Display the buttons on the bottom of the page.
-document.getElementsByTagName('body')[0].appendChild(downloadLQButton);
+document.getElementsByTagName('body')[0].appendChild(downloadSQButton);
+document.getElementsByTagName('body')[0].appendChild(downloadEQButton);
 document.getElementsByTagName('body')[0].appendChild(downloadHQButton);
 
 /*
