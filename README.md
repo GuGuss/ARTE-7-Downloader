@@ -22,8 +22,8 @@ USAGE
 
 Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 2 buttons: 
 
-    $ Download SQ (for Small Quality)
-    $ Download HQ (for High Qulaity)
+* "Download SQ" (for Small Quality)
+* "Download HQ" (for High Qulaity)
 
 FAQ
 ---
