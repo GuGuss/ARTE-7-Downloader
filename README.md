@@ -4,7 +4,7 @@ ARTE-7-Downloader
 DESCRIPTION
 -----------
 
-This script allows you to get MP4 URLs of any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
+This script allows you to access the MP4 URL of any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
 
 User scripts are very easy to install on your Internet browser.
 
@@ -24,6 +24,8 @@ Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.
 
 * "Download SQ" (for Small Quality)
 * "Download HQ" (for High Qulaity)
+
+Those buttons should redirect you to the MP4 URL of the video.
 
 FAQ
 ---
