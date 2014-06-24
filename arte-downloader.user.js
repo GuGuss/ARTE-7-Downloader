@@ -21,7 +21,7 @@ if(!GM_Debug) {
 // Create a download SQ button.
 var downloadSQButton = document.createElement('input');
 with(downloadSQButton) {
-  setAttribute('value','Download SQ');
+  setAttribute('value','Download 2200');
   setAttribute('type','button');
 }
 downloadSQButton.onclick = function() { triggerOnClick('SQ') }; // For Chrome
@@ -29,7 +29,7 @@ downloadSQButton.onclick = function() { triggerOnClick('SQ') }; // For Chrome
 // Create a download EQ button.
 var downloadEQButton = document.createElement('input');
 with(downloadEQButton) {
-  setAttribute('value','Download EQ');
+  setAttribute('value','Download 1500');
   setAttribute('type','button');
 }
 downloadEQButton.onclick = function() { triggerOnClick('EQ') }; // For Chrome
@@ -37,7 +37,7 @@ downloadEQButton.onclick = function() { triggerOnClick('EQ') }; // For Chrome
 // Create a download HQ button.
 var downloadHQButton = document.createElement('input');
 with(downloadHQButton) {
-  setAttribute('value','Download HQ');
+  setAttribute('value','Download 800');
   setAttribute('type','button');
 }
 downloadHQButton.onclick = function() { triggerOnClick('HQ') }; // For Chrome
