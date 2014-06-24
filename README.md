@@ -20,11 +20,11 @@ INSTALL - GOOGLE CHROME
 USAGE
 -----
 
-Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 2 buttons: 
+Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 3 buttons: 
 
-* "Download SQ" (for Standard Quality "seems to be the best quality")
-* "Download EQ" (for Extension Quality)
-* "Download HQ" (for High Qulaity)
+* "Download 2200" (High Quality)
+* "Download 1500" (Medium Quality)
+* "Download 800" (Low Quality)
 
 FAQ
 ---
