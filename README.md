@@ -20,6 +20,8 @@ INSTALL - GOOGLE CHROME
 USAGE
 -----
 
+![](sample.png)
+
 Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 3 buttons: 
 
 * "Download 2200" (High Quality)
