@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Arte+7 Downloader
 // @namespace   GuGuss
-// @description Display a link to the MP4 URL of an Arte+7 video
+// @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
 // @version     1.2
 // ==/UserScript==
