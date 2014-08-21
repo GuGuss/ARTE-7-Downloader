@@ -3,49 +3,55 @@
 // @namespace   GuGuss
 // @description Display a link to the MP4 URL of an Arte+7 video
 // @include     http://www.arte.tv/guide/*
-// @version     1.1
+// @version     1.2
 // ==/UserScript==
 
-if ('function' !== GM_xmlhttpRequest) {
-  console.log('Userscript manager not supported');
-}
-
-var GM_Debug = 1;
-if(!GM_Debug) {
+// Set this to 1 to enable console logs.
+var debug_mode = 0;
+if(!debug_mode) {
   console.log('Debug mode disabled');
   console.log = function() {};
 } else {
   console.log('Debug mode enabled');
 }
 
-// Create a download SQ button.
-var downloadSQButton = document.createElement('input');
-with(downloadSQButton) {
-  setAttribute('value','Download 2200');
-  setAttribute('type','button');
+// Grease Monkey check.
+if ('function' !== GM_xmlhttpRequest) {
+  console.log('Userscript manager not supported');
 }
-downloadSQButton.onclick = function() { triggerOnClick('SQ') }; // For Chrome
 
-// Create a download EQ button.
-var downloadEQButton = document.createElement('input');
-with(downloadEQButton) {
-  setAttribute('value','Download 1500');
-  setAttribute('type','button');
+// High quality link (SQ: 2200).
+var downloadHQ = document.createElement('a');
+with(downloadHQ) {
+  setAttribute('class', 'btn btn-block');
+  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black; margin-top:5px;');
 }
-downloadEQButton.onclick = function() { triggerOnClick('EQ') }; // For Chrome
+downloadHQ.innerHTML= "Download <strong>High</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+downloadHQ.onclick = function() { triggerOnClick('SQ') }; // For Chrome
 
-// Create a download HQ button.
-var downloadHQButton = document.createElement('input');
-with(downloadHQButton) {
-  setAttribute('value','Download 800');
-  setAttribute('type','button');
+// Standard quality link (EQ: 1500).
+var downloadEQ = document.createElement('a');
+with(downloadEQ) {
+  setAttribute('class', 'btn btn-block');
+  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
 }
-downloadHQButton.onclick = function() { triggerOnClick('HQ') }; // For Chrome
+downloadEQ.innerHTML= "Download <strong>Standard</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+downloadEQ.onclick = function() { triggerOnClick('EQ') }; // For Chrome
 
-// Display the buttons on the bottom of the page.
-document.getElementsByTagName('body')[0].appendChild(downloadSQButton);
-document.getElementsByTagName('body')[0].appendChild(downloadEQButton);
-document.getElementsByTagName('body')[0].appendChild(downloadHQButton);
+// Low quality link (HQ: 800).
+var downloadSQ = document.createElement('a');
+with(downloadSQ) {
+  setAttribute('class', 'btn btn-block');
+  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
+}
+downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+downloadSQ.onclick = function() { triggerOnClick('HQ') }; // For Chrome
+
+// Display the buttons next to the video using XPath query.
+var details_focus = document.evaluate("//*[@id='details-focus']", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+details_focus.snapshotItem(0).appendChild(downloadHQ);
+details_focus.snapshotItem(0).appendChild(downloadEQ);
+details_focus.snapshotItem(0).appendChild(downloadSQ);
 
 /*
  * Action callback when clicking the Download button.
