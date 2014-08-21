@@ -1,6 +1,8 @@
 ARTE-7-Downloader
 =================
 
+Current version: **1.2**.
+
 DESCRIPTION
 -----------
 
@@ -17,6 +19,9 @@ INSTALL - GOOGLE CHROME
 
 * Simply drag and drop the ``arte-downloader.user.js`` file on this page.
 
+
+**Note**: To upgrade to a newer version, you need to redo those steps.
+
 USAGE
 -----
 
@@ -24,9 +29,9 @@ USAGE
 
 Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 3 buttons: 
 
-* "Download 2200" (High Quality)
-* "Download 1500" (Medium Quality)
-* "Download 800" (Low Quality)
+* Download **High** Quality
+* Download **Standard** Quality
+* Download **Low** Quality
 
 FAQ
 ---
