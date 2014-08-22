@@ -8,10 +8,13 @@ DESCRIPTION
 
 This script allows you to get MP4 URLs of any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
 
-User scripts are very easy to install on your Internet browser.
+**Note**: User scripts are very easy to install on your browser ^^.
 
-INSTALL - GOOGLE CHROME
------------------------
+INSTALL
+-------
+
+GOOGLE CHROME
+^^^^^^^^^^^^^
 
 * Download the [ZIP archive](https://github.com/GuGuss/ARTE-7-Downloader/archive/master.zip) and extract it on your computer.
 
@@ -21,6 +24,11 @@ INSTALL - GOOGLE CHROME
 
 
 **Note**: To upgrade to a newer version, you need to redo those steps.
+
+FIREFOX
+^^^^^^^
+
+Not tested.
 
 USAGE
 -----
