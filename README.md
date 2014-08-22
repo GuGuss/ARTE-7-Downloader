@@ -27,7 +27,7 @@ USAGE
 
 ![](sample.png)
 
-Once the script is installed, go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and scroll down to the bottom of the page where you should see 3 buttons: 
+Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons next to the video: 
 
 * Download **High** Quality
 * Download **Standard** Quality
