@@ -80,7 +80,7 @@ function triggerOnClick(quality){
 function getJsonUrl() {  
   
   // Run the XPath query using the XPath identifier of the player.
-  result = document.evaluate("//*[@id='details-focus']/div/div/div/div/div[2]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+  result = document.evaluate("//*[@arte_vp_url]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
   
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
   playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
