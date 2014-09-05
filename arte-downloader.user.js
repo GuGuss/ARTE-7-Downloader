@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
-// @version     1.2
+// @version     1.2.1
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
@@ -47,8 +47,8 @@ with(downloadSQ) {
 downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
 downloadSQ.onclick = function() { triggerOnClick('HQ') }; // For Chrome
 
-// Display the buttons next to the video using XPath query.
-var details_focus = document.evaluate("//*[@id='details-focus']", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+// Display the buttons at the bottom of the page.
+var details_focus = document.evaluate("body", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 details_focus.snapshotItem(0).appendChild(downloadHQ);
 details_focus.snapshotItem(0).appendChild(downloadEQ);
 details_focus.snapshotItem(0).appendChild(downloadSQ);
@@ -80,7 +80,7 @@ function triggerOnClick(quality){
 function getJsonUrl() {  
   
   // Run the XPath query using the XPath identifier of the player.
-  result = document.evaluate("//*[@id='details-focus']/div/div/div/div/div[2]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+  result = document.evaluate("//*[@arte_vp_url]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
   
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
   playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
