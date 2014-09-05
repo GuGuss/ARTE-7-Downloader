@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
-// @version     1.2
+// @version     1.2.1
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
