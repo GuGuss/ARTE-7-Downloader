@@ -47,8 +47,8 @@ with(downloadSQ) {
 downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
 downloadSQ.onclick = function() { triggerOnClick('HQ') }; // For Chrome
 
-// Display the buttons next to the video using XPath query.
-var details_focus = document.evaluate("//*[@id='details-focus']", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+// Display the buttons at the bottom of the page.
+var details_focus = document.evaluate("body", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 details_focus.snapshotItem(0).appendChild(downloadHQ);
 details_focus.snapshotItem(0).appendChild(downloadEQ);
 details_focus.snapshotItem(0).appendChild(downloadSQ);
