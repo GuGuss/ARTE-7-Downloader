@@ -23,7 +23,7 @@ if ('function' !== GM_xmlhttpRequest) {
 // High quality link (SQ: 2200).
 var downloadHQ = document.createElement('a');
 with(downloadHQ) {
-  setAttribute('class', 'btn btn-block');
+  setAttribute('class', 'btn btn-block btn-default');
   setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black; margin-top:5px;');
 }
 downloadHQ.innerHTML= "Download <strong>High</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
@@ -32,7 +32,7 @@ downloadHQ.onclick = function() { triggerOnClick('SQ') }; // For Chrome
 // Standard quality link (EQ: 1500).
 var downloadEQ = document.createElement('a');
 with(downloadEQ) {
-  setAttribute('class', 'btn btn-block');
+  setAttribute('class', 'btn btn-block btn-default');
   setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
 }
 downloadEQ.innerHTML= "Download <strong>Standard</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
@@ -41,7 +41,7 @@ downloadEQ.onclick = function() { triggerOnClick('EQ') }; // For Chrome
 // Low quality link (HQ: 800).
 var downloadSQ = document.createElement('a');
 with(downloadSQ) {
-  setAttribute('class', 'btn btn-block');
+  setAttribute('class', 'btn btn-block btn-default');
   setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
 }
 downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
