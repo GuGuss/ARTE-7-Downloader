@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
-var debug_mode = 0;
+var debug_mode = 1;
 if(!debug_mode) {
   console.log('Debug mode disabled');
   console.log = function() {};
@@ -80,7 +80,7 @@ function triggerOnClick(quality){
 function getJsonUrl() {  
   
   // Run the XPath query using the XPath identifier of the player.
-  result = document.evaluate("//*[@arte_vp_autostart=1]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+  result = document.evaluate("/html/body/div[4]/section[2]/div/div/div/div/div[2]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
   
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
   playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
