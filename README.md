@@ -1,7 +1,7 @@
 ARTE-7-Downloader
 =================
 
-Current version: **1.3**.
+Current version: **1.4**.
 
 DESCRIPTION
 -----------
