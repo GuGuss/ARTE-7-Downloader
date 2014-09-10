@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
-// @version     1.3
+// @version     1.4
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
@@ -20,47 +20,64 @@ if ('function' !== GM_xmlhttpRequest) {
   console.log('Userscript manager not supported');
 }
 
-// High quality link (SQ: 2200).
-var downloadHQ = document.createElement('a');
-with(downloadHQ) {
-  setAttribute('class', 'btn btn-block btn-default');
-  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black; margin-top:5px;');
-}
-downloadHQ.innerHTML= "Download <strong>High</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-downloadHQ.onclick = function() { triggerOnClick('SQ') }; // For Chrome
+var addButtons = function(element) {
+  // High quality link (SQ: 2200).
+  var downloadHQ = document.createElement('a');
+  with(downloadHQ) {
+    setAttribute('class', 'btn btn-default');
+    setAttribute('style', 'text-align: center; display: table-cell;');
+  }
+  downloadHQ.innerHTML= "Download <strong>High</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+  downloadHQ.onclick = function() { triggerOnClick(element, 'SQ') }; // For Chrome
 
-// Standard quality link (EQ: 1500).
-var downloadEQ = document.createElement('a');
-with(downloadEQ) {
-  setAttribute('class', 'btn btn-block btn-default');
-  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
-}
-downloadEQ.innerHTML= "Download <strong>Standard</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-downloadEQ.onclick = function() { triggerOnClick('EQ') }; // For Chrome
+  // Standard quality link (EQ: 1500).
+  var downloadEQ = document.createElement('a');
+  with(downloadEQ) {
+    setAttribute('class', 'btn btn-default');
+    setAttribute('style', 'text-align: center; display: table-cell;');
+  }
+  downloadEQ.innerHTML= "Download <strong>Standard</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+  downloadEQ.onclick = function() { triggerOnClick(element, 'EQ') }; // For Chrome
 
-// Low quality link (HQ: 800).
-var downloadSQ = document.createElement('a');
-with(downloadSQ) {
-  setAttribute('class', 'btn btn-block btn-default');
-  setAttribute('style', 'margin-left:auto; margin-right:auto; width:200px; color:black;');
-}
-downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-downloadSQ.onclick = function() { triggerOnClick('HQ') }; // For Chrome
+  // Low quality link (HQ: 800).
+  var downloadSQ = document.createElement('a');
+  with(downloadSQ) {
+    setAttribute('class', 'btn btn-default');
+    setAttribute('style', 'text-align: center; display: table-cell;');
+  }
+  downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+  downloadSQ.onclick = function() { triggerOnClick(element, 'HQ') }; // For Chrome
 
-// Display the buttons next to the video using XPath query.
-var details_focus = document.evaluate("/html/body/div[4]/section[2]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-details_focus.snapshotItem(0).appendChild(downloadHQ);
-details_focus.snapshotItem(0).appendChild(downloadEQ);
-details_focus.snapshotItem(0).appendChild(downloadSQ);
+  var credit = document.createElement('div');
+  credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px;');
+  credit.innerHTML = 'This downloader was built for you with love. <a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>'
+
+  var parent = element.parentNode.parentNode;
+
+  var container = document.createElement('div');
+  container.setAttribute('style', 'display: table; width: 100%;')
+
+  container.appendChild(downloadHQ);
+  container.appendChild(downloadEQ);
+  container.appendChild(downloadSQ);
+  parent.appendChild(container);
+  parent.appendChild(credit);
+}
+
+video_elements = document.querySelectorAll("div[arte_vp_url]");
+
+for(var i=0; i < video_elements.length; i++) {
+  addButtons(video_elements[i])
+}
 
 /*
  * Action callback when clicking the Download button.
  */
-function triggerOnClick(quality){
+function triggerOnClick(element, quality){
   console.log('onClick triggered');
 
   // Get the Player XML URL
-  var jsonUrl = getJsonUrl();
+  var jsonUrl = getJsonUrl(element);
   console.log(jsonUrl);
 
   // Get the content of the JSON file.
@@ -77,13 +94,11 @@ function triggerOnClick(quality){
 /*
  * Run an X-Path query to retrieve the URL of the JSON file which contains the MP4 video URLs.
  */
-function getJsonUrl() {  
-  
-  // Run the XPath query using the XPath identifier of the player.
-  result = document.evaluate("/html/body/div[4]/section[2]/div/div/div/div/div[2]", document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+function getJsonUrl(element) {  
   
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
-  playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
+  // playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
+  playerUrl = element.getAttribute("arte_vp_url");
 
   // Get the URL of the JSON file by removing the "player/".
   json = playerUrl.replace("player/", "");
