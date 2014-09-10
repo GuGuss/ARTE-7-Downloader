@@ -4,6 +4,7 @@
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
 // @version     1.4
+// @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
@@ -45,7 +46,7 @@ for(var i=0; i < video_elements.length; i++) {
 }
 
 function createButton(element, quality) {
-  
+
   var button = document.createElement('a');
   button.setAttribute('class', 'btn btn-default');
   button.setAttribute('style', 'text-align: center; display: table-cell;');
@@ -91,8 +92,8 @@ function triggerOnClick(element, quality){
 /*
  * Run an X-Path query to retrieve the URL of the JSON file which contains the MP4 video URLs.
  */
-function getJsonUrl(element) {  
-  
+function getJsonUrl(element) {
+
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
   // playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
   playerUrl = element.getAttribute("arte_vp_url");
@@ -126,7 +127,7 @@ function getVideoUrl(response, quality){
 
     // Loop through all videos URLs.
     for(var i = 0; i < json["video"]["VSR"].length; i++) {
-      
+
       // Get the videos where VFO is "HBBTV".
       if(json["video"]["VSR"][i]["VFO"] === "HBBTV") {
 
