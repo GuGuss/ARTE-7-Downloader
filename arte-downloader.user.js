@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
-var debug_mode = 1;
+var debug_mode = 0;
 if(!debug_mode) {
   console.log('Debug mode disabled');
   console.log = function() {};
@@ -21,32 +21,6 @@ if ('function' !== GM_xmlhttpRequest) {
 }
 
 var addButtons = function(element) {
-  // High quality link (SQ: 2200).
-  var downloadHQ = document.createElement('a');
-  with(downloadHQ) {
-    setAttribute('class', 'btn btn-default');
-    setAttribute('style', 'text-align: center; display: table-cell;');
-  }
-  downloadHQ.innerHTML= "Download <strong>High</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-  downloadHQ.onclick = function() { triggerOnClick(element, 'SQ') }; // For Chrome
-
-  // Standard quality link (EQ: 1500).
-  var downloadEQ = document.createElement('a');
-  with(downloadEQ) {
-    setAttribute('class', 'btn btn-default');
-    setAttribute('style', 'text-align: center; display: table-cell;');
-  }
-  downloadEQ.innerHTML= "Download <strong>Standard</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-  downloadEQ.onclick = function() { triggerOnClick(element, 'EQ') }; // For Chrome
-
-  // Low quality link (HQ: 800).
-  var downloadSQ = document.createElement('a');
-  with(downloadSQ) {
-    setAttribute('class', 'btn btn-default');
-    setAttribute('style', 'text-align: center; display: table-cell;');
-  }
-  downloadSQ.innerHTML= "Download <strong>Low</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
-  downloadSQ.onclick = function() { triggerOnClick(element, 'HQ') }; // For Chrome
 
   var credit = document.createElement('div');
   credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px;');
@@ -57,9 +31,9 @@ var addButtons = function(element) {
   var container = document.createElement('div');
   container.setAttribute('style', 'display: table; width: 100%;')
 
-  container.appendChild(downloadHQ);
-  container.appendChild(downloadEQ);
-  container.appendChild(downloadSQ);
+  container.appendChild(createButton(element, 'High'));
+  container.appendChild(createButton(element, 'Standard'));
+  container.appendChild(createButton(element, 'Low'));
   parent.appendChild(container);
   parent.appendChild(credit);
 }
@@ -68,6 +42,29 @@ video_elements = document.querySelectorAll("div[arte_vp_url]");
 
 for(var i=0; i < video_elements.length; i++) {
   addButtons(video_elements[i])
+}
+
+function createButton(element, quality) {
+  
+  var button = document.createElement('a');
+  button.setAttribute('class', 'btn btn-default');
+  button.setAttribute('style', 'text-align: center; display: table-cell;');
+  button.innerHTML= "Download <strong>"+quality+"</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+
+  // Get the content of the JSON file.
+  var jsonUrl = getJsonUrl(element);
+  console.log(jsonUrl);
+  GM_xmlhttpRequest({
+    method: "GET",
+    url: jsonUrl,
+    onload: function(response) {
+      video_name = getVideoName(response, quality);
+      video_url = getVideoUrl(response, quality);
+      button.setAttribute('href', video_url);
+      button.setAttribute('download', video_name);
+    }
+  });
+  return button
 }
 
 /*
@@ -106,11 +103,24 @@ function getJsonUrl(element) {
   return json;
 }
 
+function getVideoName (response, quality) {
+  var json = JSON.parse(response.responseText);
+  console.log(json);
+  return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4'
+}
+
 /*
  * Parse the content of the JSON file and extract the MP4 videos URLs.
  */
-function parseJsonDocument(response, quality){
+function getVideoUrl(response, quality){
   if(response) {
+
+    var quality_code = {
+      'Low': 'SQ',
+      'Standard': 'EQ',
+      'High': 'HQ'
+    }
+
     // Parse the JSON text into a JavaScript object.
     var json = JSON.parse(response.responseText);
 
@@ -121,8 +131,8 @@ function parseJsonDocument(response, quality){
       if(json["video"]["VSR"][i]["VFO"] === "HBBTV") {
 
         // Get the video URL using the requested quality.
-        if(json["video"]["VSR"][i]["VQU"] === quality) {
-          console.log(quality + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
+        if(json["video"]["VSR"][i]["VQU"] === quality_code[quality]) {
+          console.log(quality_code[quality] + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
           return(json["video"]["VSR"][i]["VUR"]);
         }
       }
