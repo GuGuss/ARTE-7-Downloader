@@ -1,7 +1,7 @@
 ARTE-7-Downloader
 =================
 
-Current version: **1.3**.
+Current version: **1.4**.
 
 DESCRIPTION
 -----------
@@ -13,7 +13,7 @@ This script allows you to get MP4 URLs of any video on [ARTE+7 website](http://w
 INSTALL - GOOGLE CHROME
 -----------------------
 
-* Download the [ZIP archive](https://github.com/GuGuss/ARTE-7-Downloader/archive/master.zip) and extract it on your computer.
+* Download the [arte-downloader.user.js](../../raw/master/arte-downloader.user.js) file on your computer.
 
 * Open Google Chrome browser and go to the extension page at: __chrome://extensions__
 
@@ -32,7 +32,7 @@ USAGE
 
 ![](sample.png)
 
-Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons next to the video: 
+Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons under the video: 
 
 * Download **High** Quality
 * Download **Standard** Quality
