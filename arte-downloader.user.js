@@ -116,9 +116,9 @@ function getVideoUrl(response, quality){
   if(response) {
 
     var quality_code = {
-      'Low': 'SQ',
+      'Low': 'HQ',
       'Standard': 'EQ',
-      'High': 'HQ'
+      'High': 'SQ'
     }
 
     // Parse the JSON text into a JavaScript object.
