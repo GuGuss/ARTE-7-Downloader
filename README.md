@@ -25,14 +25,17 @@ INSTALL - GOOGLE CHROME
 INSTALL - FIREFOX & OTHER
 -------------------------
 
-Not tested.
+* Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon that will manage the script
+
+* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): Greasemonkey should open a dialog window to allow the script installation. Click *Install* and you're all set!
+
 
 USAGE
 -----
 
 ![](sample.png)
 
-Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons under the video: 
+Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons under the video:
 
 * Download **High** Quality
 * Download **Standard** Quality
