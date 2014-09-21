@@ -10,6 +10,8 @@ This script allows you to get MP4 URLs of any video on [ARTE+7 website](http://w
 
 **Note**: User scripts are very easy to install on your browser ^^.
 
+![](sample.png)
+
 INSTALL - GOOGLE CHROME
 -----------------------
 
@@ -32,8 +34,6 @@ INSTALL - FIREFOX & OTHER
 
 USAGE
 -----
-
-![](sample.png)
 
 Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons under the video:
 
