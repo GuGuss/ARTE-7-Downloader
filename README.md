@@ -25,7 +25,7 @@ INSTALL - GOOGLE CHROME
 INSTALL - FIREFOX
 -------------------------
 
-* Download and Install [Arte+7 Downloader.xpi](../../raw/master/Arte+7_Downloader.xpi) locally.
+* Download and Install [Arte+7 Downloader.xpi](../../raw/master/Arte+7 Downloader.xpi) locally.
 
 [INSTALL - Opera](http://www.opera.com/docs/userjs/using/#writingscripts)
 -------------------------
