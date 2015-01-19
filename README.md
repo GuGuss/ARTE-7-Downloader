@@ -1,4 +1,4 @@
-ARTE-7-Downloader
+ARTE-7-PLAYGROUND
 =================
 
 Current version: **1.4**.
