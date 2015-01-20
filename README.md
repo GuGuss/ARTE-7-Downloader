@@ -1,7 +1,7 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **1.4**.
+Current version: **2.0**.
 
 DESCRIPTION
 -----------
@@ -22,15 +22,18 @@ INSTALL - GOOGLE CHROME
 * Simply drag and drop the ``arte-downloader.user.js`` file on this page.
 
 
-**Note**: To upgrade to a newer version, you need to redo those steps.
-
-INSTALL - FIREFOX & OTHER
+INSTALL - FIREFOX
 -------------------------
 
-* Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon that will manage the script
+* Download and Install [Arte+7 Downloader.xpi](../../raw/master/Arte+7 Downloader.xpi) locally.
 
-* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): Greasemonkey should open a dialog window to allow the script installation. Click *Install* and you're all set!
+[INSTALL - Opera](http://www.opera.com/docs/userjs/using/#writingscripts)
+-------------------------
+To enable User JavaScript:
+* For Mac, go to: Opera menu > Preferences > Advanced > Content > JavaScript options
+* For UNIX and Windows, go to: O menu > Settings > Preferences > Advanced > Content > JavaScript options
 
+Select the directory where you will put your [Arte+7 Downloader.js](../../raw/master/Arte+7_Downloader.js). Opera will load the file in the specified directory whose names end with .js and will use it as a User JavaScript file. If a file name ends with .user.js it will be assumed to use Greasemonkey notation, and the load will occur after the page load which will be longer by several minutes.
 
 USAGE
 -----
@@ -40,6 +43,10 @@ Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you sho
 * Download **High** Quality
 * Download **Standard** Quality
 * Download **Low** Quality
+
+Then, put your cursor over a button to get more details.
+
+You can also go on [archive.org](https://web.archive.org/web/*/http://www.arte.tv/guide/fr/plus7) to see if a video got archived. This script will enable you to watch them.
 
 FAQ
 ---
