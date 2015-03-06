@@ -3,6 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
+// @include     http://concert.arte.tv/fr/*
 // @version     1.4
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
@@ -99,15 +100,19 @@ function getJsonUrl(element) {
   playerUrl = element.getAttribute("arte_vp_url");
 
   // Get the URL of the JSON file by removing the "player/".
-  json = playerUrl.replace("player/", "");
+  if(window.location.host !== "concert.arte.tv")
+    playerUrl = playerUrl.replace("player/", "");
 
-  return json;
+  return playerUrl;
 }
 
 function getVideoName (response, quality) {
   var json = JSON.parse(response.responseText);
   console.log(json);
-  return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4'
+  if(window.location.host !== "concert.arte.tv")
+    return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4'
+  else
+    return json['videoJsonPlayer']['VTI'].replace(/\s|:/, "_")+'_'+quality.toLowerCase()+'_quality.mp4'
 }
 
 /*
@@ -125,16 +130,29 @@ function getVideoUrl(response, quality){
     // Parse the JSON text into a JavaScript object.
     var json = JSON.parse(response.responseText);
 
-    // Loop through all videos URLs.
-    for(var i = 0; i < json["video"]["VSR"].length; i++) {
+    if(window.location.host !== "concert.arte.tv")
+    {
+      // Loop through all videos URLs.
+      for(var i = 0; i < json["video"]["VSR"].length; i++) {
 
-      // Get the videos where VFO is "HBBTV".
-      if(json["video"]["VSR"][i]["VFO"] === "HBBTV") {
+        // Get the videos where VFO is "HBBTV".
+        if(json["video"]["VSR"][i]["VFO"] === "HBBTV") {
 
-        // Get the video URL using the requested quality.
-        if(json["video"]["VSR"][i]["VQU"] === quality_code[quality]) {
-          console.log(quality_code[quality] + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
-          return(json["video"]["VSR"][i]["VUR"]);
+          // Get the video URL using the requested quality.
+          if(json["video"]["VSR"][i]["VQU"] === quality_code[quality]) {
+            console.log(quality_code[quality] + " MP4 URL : " + json["video"]["VSR"][i]["VUR"]);
+            return(json["video"]["VSR"][i]["VUR"]);
+          }
+        }
+      }
+    }
+    else
+    {
+      // Loop through all videos URLs.
+      for(var key in json["videoJsonPlayer"]["VSR"]) {
+        if(json["videoJsonPlayer"]["VSR"].hasOwnProperty(key) && key === "HTTP_"+quality_code[quality]+"_1")
+        {
+          return json["videoJsonPlayer"]["VSR"][key].url;
         }
       }
     }
