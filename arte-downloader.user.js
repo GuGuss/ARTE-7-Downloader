@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 // Set this to 1 to enable console logs.
-var debug_mode = 1;
+var debug_mode = 0;
 if(!debug_mode) {
   console.log('Debug mode disabled');
   console.log = function() {};
