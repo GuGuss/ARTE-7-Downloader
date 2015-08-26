@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
-// @version     1.4
+// @version     1.4.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
@@ -26,24 +26,24 @@ var addButtons = function(element) {
 
   var credit = document.createElement('div');
   credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px;');
-  credit.innerHTML = 'This downloader was built for you with love. <a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>'
+  credit.innerHTML = 'This downloader was built for you with love. <a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
 
   var parent = element.parentNode.parentNode;
 
   var container = document.createElement('div');
-  container.setAttribute('style', 'display: table; width: 100%;')
+  container.setAttribute('style', 'display: table; width: 100%;');
 
   container.appendChild(createButton(element, 'High'));
   container.appendChild(createButton(element, 'Standard'));
   container.appendChild(createButton(element, 'Low'));
   parent.appendChild(container);
   parent.appendChild(credit);
-}
+};
 
-video_elements = document.querySelectorAll("div[arte_vp_url]");
+var video_elements = document.querySelectorAll("div[arte_vp_url]");
 
 for(var i=0; i < video_elements.length; i++) {
-  addButtons(video_elements[i])
+  addButtons(video_elements[i]);
 }
 
 function createButton(element, quality) {
@@ -60,34 +60,13 @@ function createButton(element, quality) {
     method: "GET",
     url: jsonUrl,
     onload: function(response) {
-      video_name = getVideoName(response, quality);
-      video_url = getVideoUrl(response, quality);
+      var video_name = getVideoName(response, quality);
+      var video_url = getVideoUrl(response, quality);
       button.setAttribute('href', video_url);
       button.setAttribute('download', video_name);
     }
   });
-  return button
-}
-
-/*
- * Action callback when clicking the Download button.
- */
-function triggerOnClick(element, quality){
-  console.log('onClick triggered');
-
-  // Get the Player XML URL
-  var jsonUrl = getJsonUrl(element);
-  console.log(jsonUrl);
-
-  // Get the content of the JSON file.
-  GM_xmlhttpRequest({
-    method: "GET",
-    url: jsonUrl,
-    onload: function(response) {
-      MP4 = parseJsonDocument(response, quality);
-      window.open(MP4);
-    }
-  });
+  return button;
 }
 
 /*
@@ -97,10 +76,10 @@ function getJsonUrl(element) {
 
   // Get the value of the "arte_vp_url" attribute which contains the player URL.
   // playerUrl = result.snapshotItem(0).getAttribute("arte_vp_url");
-  playerUrl = element.getAttribute("arte_vp_url");
+  var playerUrl = element.getAttribute("arte_vp_url");
 
   // Get the URL of the JSON file by removing the "player/".
-  json = playerUrl.replace("player/", "");
+  var json = playerUrl.replace("player/", "");
 
   return json;
 }
@@ -108,7 +87,7 @@ function getJsonUrl(element) {
 function getVideoName (response, quality) {
   var json = JSON.parse(response.responseText);
   console.log(json);
-  return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4'
+  return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4';
 }
 
 /*
@@ -121,7 +100,7 @@ function getVideoUrl(response, quality){
       'Low': 'HQ',
       'Standard': 'EQ',
       'High': 'SQ'
-    }
+    };
 
     // Parse the JSON text into a JavaScript object.
     var json = JSON.parse(response.responseText);
