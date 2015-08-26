@@ -4,6 +4,7 @@
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
 // @version     1.4
+// @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
