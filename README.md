@@ -6,9 +6,7 @@ Current version: **1.5.0**.
 DESCRIPTION
 -----------
 
-This script allows you to get MP4 URLs of any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
-
-**Note**: User scripts are very easy to install on your browser ^^.
+This script works as a browser extension to download any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
 
 ![](sample.png)
 
