@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://www.arte.tv/guide/*
-// @version     1.4.1
+// @version     1.5.0
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
@@ -36,6 +36,7 @@ var addButtons = function(element) {
   container.appendChild(createButton(element, 'High'));
   container.appendChild(createButton(element, 'Standard'));
   container.appendChild(createButton(element, 'Low'));
+  container.appendChild(createButtonMetadata(element));
   parent.appendChild(container);
   parent.appendChild(credit);
 };
@@ -69,6 +70,30 @@ function createButton(element, quality) {
   return button;
 }
 
+
+function createButtonMetadata(element) {
+
+  var button = document.createElement('a');
+  button.setAttribute('class', 'btn btn-default');
+  button.setAttribute('style', 'text-align: center; display: table-cell;');
+  button.innerHTML= "Download <strong>Metadata</strong> <span class='icomoon-angle-right pull-right'></span>";
+  
+  // Get the content of the JSON file.
+  var jsonUrl = getJsonUrl(element);
+  console.log(jsonUrl);
+  GM_xmlhttpRequest({
+    method: "GET",
+    url: jsonUrl,
+    onload: function(response) {
+      var metadata = getMetadata(response);
+      // Properly encode to Base 64.
+      var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
+      button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
+    }
+  });
+  return button;
+}
+
 /*
  * Run an X-Path query to retrieve the URL of the JSON file which contains the MP4 video URLs.
  */
@@ -84,10 +109,23 @@ function getJsonUrl(element) {
   return json;
 }
 
+/*
+ * Parse the content of the JSON file and extract the video name.
+ */
 function getVideoName (response, quality) {
   var json = JSON.parse(response.responseText);
-  console.log(json);
+  console.log(json['video']['VST']);
   return json['video']['VST']['VNA']+'_'+quality.toLowerCase()+'_quality.mp4';
+}
+
+/*
+ * Parse the content of the JSON file and extract the metadata informations.
+ */
+function getMetadata (response) {
+  var json = JSON.parse(response.responseText);
+  console.log(json['video']);
+  var metadata = json['video']['VDE'] + json['video']['VTA'] + json['video']['V7T'];
+  return metadata;
 }
 
 /*
