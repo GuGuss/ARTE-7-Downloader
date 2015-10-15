@@ -35,11 +35,12 @@ INSTALL - FIREFOX & OTHER
 USAGE
 -----
 
-Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 3 buttons under the video:
+Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 4 buttons under the video:
 
 * Download **High** Quality
 * Download **Standard** Quality
 * Download **Low** Quality
+* Download **Metdata** (Text file containing the video metadata)
 
 FAQ
 ---
