@@ -40,7 +40,7 @@ Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you sho
 * Download **High** Quality
 * Download **Standard** Quality
 * Download **Low** Quality
-* Download **Metdata** (Text file containing the video metadata)
+* Download **Metadata** (Text file containing the video metadata)
 
 FAQ
 ---
