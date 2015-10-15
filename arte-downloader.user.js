@@ -88,6 +88,8 @@ function createButtonMetadata(element) {
       var metadata = getMetadata(response);
       // Properly encode to Base 64.
       var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
+      // The href will output a text file. 
+      // For a CSV file, that would be: data:application/octet-stream,field1%2Cfield2%0Afoo%2Cbar%0Agoo%2Cgai%0A
       button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
     }
   });
@@ -124,7 +126,7 @@ function getVideoName (response, quality) {
 function getMetadata (response) {
   var json = JSON.parse(response.responseText);
   console.log(json['video']);
-  var metadata = json['video']['VDE'] + json['video']['VTA'] + json['video']['V7T'];
+  var metadata = json['video']['V7T'] + '\n\n' + json['video']['VDE'] + '\n\n' + json['video']['VTA'];
   return metadata;
 }
 
