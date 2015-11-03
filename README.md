@@ -1,7 +1,7 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **1.5.0**.
+Current version: **1.6.0**.
 
 DESCRIPTION
 -----------
@@ -35,10 +35,11 @@ USAGE
 
 Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 4 buttons under the video:
 
-* Download **High** Quality
-* Download **Standard** Quality
-* Download **Low** Quality
-* Download **Metadata** (Text file containing the video metadata)
+Download
+* **High** Quality
+* **Standard** Quality
+* **Low** Quality
+* **Metadata** (Text file containing the video metadata)
 
 FAQ
 ---
