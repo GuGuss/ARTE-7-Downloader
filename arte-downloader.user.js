@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://*.arte.tv/*
-// @version     1.5.1
+// @version     1.6.0
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -18,37 +18,56 @@ if (!debug_mode) {
     console.log('GM debug mode enabled');
 }
 
+// aka. versionCode
+var languageCode = {
+    'VO-STF': 'Original (subtitled in french)',
+    'VA-STA': 'German subtitled',
+    'VF-STF': 'French subtitled',
+    'VOF': 'French',
+    'VOA': 'German',
+    'VOF-STMF': 'Sourds et malentendants'
+};
+
 var addButtons = function (element) {
+    var languageRadioList = document.createElement('select');
+    languageRadioList.innerHTML = "<option value='VO-STF' selected>" + languageCode['VO-STF'] + "</option>"
+                                + "<option value='VA-STA'>" + languageCode['VA-STA'] + "</option>"
+                                + "<option value='VF-STF'>" + languageCode['VF-STF'] + "</option>"
+                                + "<option value='VOF'>" + languageCode['VOF'] + "</option>"
+                                + "<option value='VOA'>" + languageCode['VOA'] + "</option>"
+                                + "<option value='VOF-STMF'>" + languageCode['VOF-STMF'] + "</option>";
+    languageRadioList.setAttribute('class', 'btn btn-default');
+    languageRadioList.setAttribute('style', 'width:98%');
 
     var credit = document.createElement('div');
     credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px;');
-    credit.innerHTML = 'This downloader was built for you with love. <a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
-
-    var parent = element.parentNode.parentNode;
+    credit.innerHTML = 'Arte+7 Downloader v.' + GM_info.script.version + ' built by and for the community with <strong><3</strong><br /><a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
 
     var container = document.createElement('div');
     container.setAttribute('style', 'display: table; width: 100%;');
-
+    //container.appendChild(languageRadioList);
     container.appendChild(createButton(element, 'High'));
     container.appendChild(createButton(element, 'Standard'));
     container.appendChild(createButton(element, 'Low'));
-    container.appendChild(createButtonMetadata(element));
+    container.appendChild(createButtonMetadata(element)); // @TODO display instead of download
+
+    var parent = element.parentNode.parentNode;
     parent.appendChild(container);
     parent.appendChild(credit);
 };
 
+// Decorates videos with download buttons
 var video_elements = document.querySelectorAll("div[arte_vp_url]");
-
 for (var i = 0; i < video_elements.length; i++) {
     addButtons(video_elements[i]);
 }
 
-function createButton(element, quality) {
+function createButton(element, quality, language) {
 
     var button = document.createElement('a');
     button.setAttribute('class', 'btn btn-default');
     button.setAttribute('style', 'text-align: center; display: table-cell;');
-    button.innerHTML = "Download <strong>" + quality + "</strong> Quality <span class='icomoon-angle-right pull-right'></span>";
+    button.innerHTML = "<strong>" + quality + "</strong> Quality <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     // Get the content of the JSON file.
     var jsonUrl = getJsonUrl(element);
@@ -58,9 +77,10 @@ function createButton(element, quality) {
         url: jsonUrl,
         onload: function (response) {
             var video_name = getVideoName(response, quality);
-            var video_url = getVideoUrl(response, quality);
-            button.setAttribute('href', video_url);
+            var video_url = getVideoUrl(response, quality, language);
             button.setAttribute('download', video_name);
+            button.setAttribute('href', video_url);
+            button.setAttribute('target', '_blank');
         }
     });
 
@@ -73,11 +93,11 @@ function createButtonMetadata(element) {
     var button = document.createElement('a');
     button.setAttribute('class', 'btn btn-default');
     button.setAttribute('style', 'text-align: center; display: table-cell;');
-    button.innerHTML = "Download <strong>Metadata</strong> <span class='icomoon-angle-right pull-right'></span>";
+    button.innerHTML = "<strong>Metadata</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     // Get the content of the JSON file.
     var jsonUrl = getJsonUrl(element);
-    console.log(jsonUrl);
+    //console.log(jsonUrl);
     GM_xmlhttpRequest({
         method: "GET",
         url: jsonUrl,
@@ -88,6 +108,7 @@ function createButtonMetadata(element) {
             // The href will output a text file. 
             // For a CSV file, that would be: data:application/octet-stream,field1%2Cfield2%0Afoo%2Cbar%0Agoo%2Cgai%0A
             button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
+            button.setAttribute('target', '_blank');
         }
     });
     return button;
@@ -118,18 +139,19 @@ function getVideoName(response, quality) {
  */
 function getMetadata(response) {
     var json = JSON.parse(response.responseText);
-    console.log(json['videoJsonPlayer']);
+    //console.log(json['videoJsonPlayer']);
     var metadata = json['videoJsonPlayer']['V7T'] + '\n\n' + json['videoJsonPlayer']['VDE'] + '\n\n' + json['videoJsonPlayer']['VTA'];
     return metadata;
 }
 
 /*
- * Parse the content of the JSON file and extract the MP4 videos URLs.
+ * Parse the content of the JSON file and extract the MP4 videos URLs in the required language.
+ * @TODO : parse once the .json
  */
-function getVideoUrl(response, quality) {
+function getVideoUrl(response, quality, language) {
     if (response) {
 
-        var quality_code = {
+        var qualityCode = {
             'Low': 'HQ',
             'Standard': 'EQ',
             'High': 'SQ'
@@ -142,18 +164,20 @@ function getVideoUrl(response, quality) {
         console.log(numberOfVideos + " videos found.");
 
         // Loop through all videos URLs.
-        for (var index in videos) {
+        for (var key in videos) {
 
             // Get the videos where video format is "HBBTV".
-            if (json["videoJsonPlayer"]["VSR"][videos[index]]["videoFormat"] === "HBBTV") {
+            if (json["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "HBBTV") {
+                console.log(json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"]);
 
                 // Get the original version (french dubbed)
-                if (json["videoJsonPlayer"]["VSR"][videos[index]]["versionCode"] === "VO-STF") {
+                if (json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"] === "VO-STF") {
 
                     // Get the video URL using the requested quality.
-                    if (json["videoJsonPlayer"]["VSR"][videos[index]]["VQU"] === quality_code[quality]) {
-                        console.log(quality_code[quality] + " MP4 URL : " + json["videoJsonPlayer"]["VSR"][videos[index]]["url"]);
-                        return (json["videoJsonPlayer"]["VSR"][videos[index]]["url"]);
+                    if (json["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === qualityCode[quality]) {
+                        var url = json["videoJsonPlayer"]["VSR"][videos[key]]["url"];
+                        console.log(qualityCode[quality] + " MP4 URL : " + url);
+                        return (url);
                     }
                 }
             }
