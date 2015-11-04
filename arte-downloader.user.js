@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Display direct links to MP4 videos of Arte+7 programs
 // @include     http://*.arte.tv/*
-// @version     1.6.0
+// @version     1.7.0
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -28,7 +28,7 @@ var languageCode = {
     'VOF-STMF': 'Sourds et malentendants'
 };
 
-var addButtons = function (element) {
+var decorateVideos = function (element) {
     var languageRadioList = document.createElement('select');
     languageRadioList.innerHTML = "<option value='VO-STF' selected>" + languageCode['VO-STF'] + "</option>"
                                 + "<option value='VA-STA'>" + languageCode['VA-STA'] + "</option>"
@@ -43,50 +43,90 @@ var addButtons = function (element) {
     credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px;');
     credit.innerHTML = 'Arte+7 Downloader v.' + GM_info.script.version + ' built by and for the community with <strong><3</strong><br /><a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
 
+    var parent = element.parentNode.parentNode;
     var container = document.createElement('div');
     container.setAttribute('style', 'display: table; width: 100%;');
     //container.appendChild(languageRadioList);
-    container.appendChild(createButton(element, 'High'));
-    container.appendChild(createButton(element, 'Standard'));
-    container.appendChild(createButton(element, 'Low'));
-    container.appendChild(createButtonMetadata(element)); // @TODO display instead of download
-
-    var parent = element.parentNode.parentNode;
+    createButton(element, 'High', container);
+    createButton(element, 'Standard', container);
+    createButton(element, 'Low', container);
+    //container.appendChild(createButtonMetadata(element)); // @TODO display instead of download
     parent.appendChild(container);
     parent.appendChild(credit);
 };
 
+var videoPlayerURL = "arte_vp_url";
+var videoPlayerLiveURL = "arte_vp_live-url";
+var bLive = false;
+
 // Decorates videos with download buttons
-var video_elements = document.querySelectorAll("div[arte_vp_url]");
-for (var i = 0; i < video_elements.length; i++) {
-    addButtons(video_elements[i]);
+var video_elements = document.querySelector("div[" + videoPlayerURL + "]");
+
+// if no video is found, check for Livestream
+if (video_elements == null) {
+    bLive = true;
+    video_elements = document.querySelector("div[" + videoPlayerLiveURL + "]");
 }
+decorateVideos(video_elements);
+/*for (var i = 0; i < video_elements.length; i++) {
+    addButtons(video_elements[i]);
+}*/
 
-function createButton(element, quality, language) {
-
+function createButton(element, quality, container, language) {
+    // Create the button element
     var button = document.createElement('a');
     button.setAttribute('class', 'btn btn-default');
     button.setAttribute('style', 'text-align: center; display: table-cell;');
     button.innerHTML = "<strong>" + quality + "</strong> Quality <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     // Get the content of the JSON file.
-    var jsonUrl = getJsonUrl(element);
-    console.log(jsonUrl);
-    GM_xmlhttpRequest({
-        method: "GET",
-        url: jsonUrl,
-        onload: function (response) {
-            var video_name = getVideoName(response, quality);
-            var video_url = getVideoUrl(response, quality, language);
-            button.setAttribute('download', video_name);
-            button.setAttribute('href', video_url);
-            button.setAttribute('target', '_blank');
-        }
-    });
+    var playerUrl = getJsonUrl(element);
 
-    return button;
+    // if it's a stream, get the video player
+    if (bLive === true) {
+        GM_xmlhttpRequest(
+            {
+                method: "GET",
+                url: element.getAttribute(videoPlayerLiveURL),
+                onload: function (response) {
+                    var json = JSON.parse(response.responseText);
+                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
+                    console.log("Json live video player URL: " + playerUrl);
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: playerUrl,
+                        onload: function (response) {
+                            var video_name = getVideoName(response, quality);
+                            var video_url = getVideoUrl(response, quality, language);
+                            button.setAttribute('download', video_name);
+                            button.setAttribute('href', video_url);
+                            button.setAttribute('target', '_blank');
+
+                            // Append the button to the container
+                            container.appendChild(button);
+                        }
+                    });
+                }
+            }
+        );
+    } else {
+        console.log("Json video player URL: " + playerUrl);
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: playerUrl,
+            onload: function (response) {
+                var video_name = getVideoName(response, quality);
+                var video_url = getVideoUrl(response, quality, language);
+                button.setAttribute('download', video_name);
+                button.setAttribute('href', video_url);
+                button.setAttribute('target', '_blank');
+
+                // Append the button to the container
+                container.appendChild(button);
+            }
+        });
+    }
 }
-
 
 function createButtonMetadata(element) {
 
@@ -97,7 +137,6 @@ function createButtonMetadata(element) {
 
     // Get the content of the JSON file.
     var jsonUrl = getJsonUrl(element);
-    //console.log(jsonUrl);
     GM_xmlhttpRequest({
         method: "GET",
         url: jsonUrl,
@@ -118,11 +157,13 @@ function createButtonMetadata(element) {
  * Run an X-Path query to retrieve the URL of the JSON file which contains the MP4 video URLs.
  */
 function getJsonUrl(element) {
-
-    // Get the value of the "arte_vp_url" attribute which contains the player URL.
-    var playerUrl = element.getAttribute("arte_vp_url");
-
-    return playerUrl;
+    // Get the live player URL
+    if (bLive === true) {
+        return element.getAttribute(videoPlayerLiveURL);
+    }
+    else {
+        return element.getAttribute(videoPlayerURL);
+    }
 }
 
 /*
@@ -161,25 +202,34 @@ function getVideoUrl(response, quality, language) {
         var json = JSON.parse(response.responseText);
         var videos = Object.keys(json["videoJsonPlayer"]["VSR"]);
         var numberOfVideos = videos.length;
-        console.log(numberOfVideos + " videos found.");
+        console.log(numberOfVideos + " versions of the video have been found.");
 
         // Loop through all videos URLs.
         for (var key in videos) {
 
-            // Get the videos where video format is "HBBTV".
+            // Check if video format is "HBBTV".
             if (json["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "HBBTV") {
-                console.log(json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"]);
+                //console.log(json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"]);
 
                 // Get the original version (french dubbed)
-                if (json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"] === "VO-STF") {
+                //if (json["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"] === "VOF") {
 
-                    // Get the video URL using the requested quality.
-                    if (json["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === qualityCode[quality]) {
-                        var url = json["videoJsonPlayer"]["VSR"][videos[key]]["url"];
-                        console.log(qualityCode[quality] + " MP4 URL : " + url);
-                        return (url);
-                    }
+                // Get the video URL using the requested quality.
+                if (json["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === qualityCode[quality]) {
+                    var url = json["videoJsonPlayer"]["VSR"][videos[key]]["url"];
+                    console.log(qualityCode[quality] + " MP4 URL : " + url);
+                    return (url);
                 }
+                //}
+            }
+
+                // otherwise check if video format is a playlist
+            else if (json["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "M3U8_HQ") {
+
+                // Get playlist URL
+                var url = json["videoJsonPlayer"]["VSR"][videos[key]]["url"];
+                console.log("playlist URL : " + url);
+                return (url);
             }
         }
         return 0;
