@@ -1,7 +1,16 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **1.7.1**.
+Current version: **2.0.0**.
+
+CONTRIBUTORS
+-----------
+
+Bumbadawg
+GuGuss
+aug-riedinger
+maxlath
+uahim
 
 DESCRIPTION
 -----------
@@ -33,13 +42,20 @@ INSTALL - FIREFOX & OTHER
 USAGE
 -----
 
-Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 4 buttons under the video:
+Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see buttons under the video:
+
+Select language
+
+and
 
 Download
 * **High** Quality
 * **Standard** Quality
 * **Low** Quality
 * **Metadata** (Text file containing the video metadata)
+
+In case of a livestream/direct, you'll be able to either watch it on your browser
+or copy the link into [VLC](http://www.videolan.org/vlc/)
 
 FAQ
 ---
