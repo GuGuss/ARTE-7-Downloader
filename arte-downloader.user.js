@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name        Arte+7 Downloader
 // @namespace   GuGuss
-// @description Display direct links to MP4 videos of Arte+7 programs
+// @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.1.1
+// @version     2.1.2
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -23,6 +23,9 @@ var playerJson = null;
 var videoPlayerURL = "arte_vp_url";
 var videoPlayerLiveURL = "arte_vp_live-url";
 var isLiveStreaming = true;
+var nbHTTP = 0;
+var nbRTMP = 0;
+var nbHLS = 0;
 
 var qualityCode = {
     'Low': 'HQ',
@@ -65,9 +68,6 @@ function preParsePlayerJson() {
     if (playerJson) {
         var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
         var nbVideos = videos.length;
-        var nbHTTP = 0;
-        var nbRTMP = 0;
-        var nbHLS = 0;
 
         console.log("\nLanguages found:");
 
@@ -102,12 +102,24 @@ function createButton(quality, language) {
     var button = document.createElement('a');
     var videoName = getVideoName(quality);
     var videoUrl = getVideoUrl(qualityCode[quality], language);
-    if (videoUrl.substring(0, 6) === "rtmp://") {
-        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> (copy/paste <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+
+    // @TODO optmize with video types from preparse
+    // Check if video exists
+    if (videoUrl === "404-video-not-found") {
+        return null;
     }
+
+    // Check if RTMP stream
+    if (videoUrl.substring(0, 7) === "rtmp://") {
+        button.innerHTML = quality + " Quality <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+    }
+
+        // Check if HLS stream
     else if (videoUrl.substring(videoUrl.length - 6, videoUrl.length - 1) === ".m3u8") {
         button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'>HLS stream</a> (copy/paste <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
+
+        // Otherwise: HTTP video
     else {
         button.innerHTML = "<strong>" + quality + "</strong> Quality MP4 <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
@@ -177,13 +189,27 @@ function createButtons(videoElement) {
     // language combobox
     var languageComboBox = createLanguageComboBox()
     container.appendChild(languageComboBox);
-    var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+    var selectedLanguage;
+
+    // Check if there are languages available to select
+    if (languageComboBox.options.length > 0) {
+        selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+    }
 
     // download buttons
     container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
-    container.appendChild(createButton('Low', selectedLanguage));
-    container.appendChild(createButton('Standard', selectedLanguage));
-    container.appendChild(createButton('High', selectedLanguage));
+    var tempButton = createButton('Low', selectedLanguage)
+    if (tempButton !== null) {
+        container.appendChild(tempButton);
+    }
+    tempButton = createButton('Standard', selectedLanguage);
+    if (tempButton !== null) {
+        container.appendChild(tempButton);
+    }
+    tempButton = createButton('High', selectedLanguage);
+    if (tempButton !== null) {
+        container.appendChild(tempButton);
+    }
 
     // credit
     var credit = document.createElement('div');
@@ -219,6 +245,7 @@ function decorateVideo(videoElement) {
         console.log("Livestream URL: " + playerUrl);
     }
 
+
     // Check if player URL points to a JSON
     if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
         parsePlayerJson(playerUrl, videoElement);
@@ -238,8 +265,8 @@ function decorateVideo(videoElement) {
                     // not found ? Look for playlist file inside the livestream player
                     if (playerUrl === undefined) {
                         console.log("Video player URL not available. Fetching livestream player URL");
-                        parsePlayerJson(livePlayerUrl, videoElement);
-                        console.log(getVideoUrl('High'));
+                        playerUrl = videoElement.getAttribute(videoPlayerLiveURL);
+                        parsePlayerJson(playerUrl, videoElement);
                     } else {
                         parsePlayerJson(playerUrl, videoElement);
                     }
@@ -281,34 +308,46 @@ function getVideoUrl(quality, language) {
     // Get videos object
     var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
 
-    // Loop through all videos URLs.
-    for (var key in videos) {
+    // Check if there are HTTP videos
+    if (nbHTTP > 0) {
 
-        // Check if video format is "HBBTV" (HTTP).
-        if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "HBBTV") {
+        // Loop through all videos URLs.
+        for (var key in videos) {
 
-            // Check language
-            if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"] === language) {
+            // Check if video format is "HBBTV" (HTTP).
+            if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "HBBTV") {
 
-                // Get the video URL using the requested quality.
-                if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === quality) {
-                    var url = playerJson["videoJsonPlayer"]["VSR"][videos[key]]["url"];
-                    console.log("Found a " + quality + " quality MP4 in " + language + ": " + url);
-                    return (url);
+                // Check language
+                if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["versionCode"] === language) {
+
+                    // Get the video URL using the requested quality.
+                    if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === quality) {
+                        var url = playerJson["videoJsonPlayer"]["VSR"][videos[key]]["url"];
+                        console.log("Found a " + quality + " quality MP4 in " + language + ": " + url);
+                        return (url);
+                    }
                 }
             }
         }
     }
 
-    // Check otherwise if video format is a playlist
-    if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "RMP4") {
-        // Get playlist URL
-        var url = playerJson["videoJsonPlayer"]["VSR"][videos[key]]["streamer"] + playerJson["videoJsonPlayer"]["VSR"][videos[key]]["url"];
-        console.log("Found a stream: " + url);
-        return (url);
+    // Tries out streaming protocols
+    // Loop through all videos URLs again.
+    for (var key in videos) {
+        // Check otherwise if video format is a playlist
+        if (playerJson["videoJsonPlayer"]["VSR"][videos[key]]["videoFormat"] === "RMP4"
+            && playerJson["videoJsonPlayer"]["VSR"][videos[key]]["VQU"] === quality) {
+
+            // Get playlist URL
+            var url = playerJson["videoJsonPlayer"]["VSR"][videos[key]]["streamer"] + playerJson["videoJsonPlayer"]["VSR"][videos[key]]["url"];
+            console.log("Found a stream: " + url);
+            return (url);
+        }
     }
 
-    return 'video-not-found';
+    // Failure
+    console.log("Not found.")
+    return '404-video-not-found';
 }
 
 
