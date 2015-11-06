@@ -1,12 +1,17 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **1.5.0**.
+Current version: **2.1.0**.
+
+CONTRIBUTORS
+-----------
+
+Bumbadawg, GuGuss, aug-riedinger, maxlath, uahim
 
 DESCRIPTION
 -----------
 
-This script works as a browser extension to download any video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7).
+This script works as a browser extension to download any video on [ARTE website](http://www.arte.tv/).
 
 ![](sample.png)
 
@@ -15,17 +20,15 @@ INSTALL - GOOGLE CHROME
 
 * Download the [arte-downloader.user.js](../../raw/master/arte-downloader.user.js) file on your computer.
 
-* Open Google Chrome browser and go to the extension page at: __chrome://extensions__
-
-* Simply drag and drop the ``arte-downloader.user.js`` file on this page.
+* Simply drag and drop the ``arte-downloader.user.js`` file on [__chrome://extensions__](chrome://extensions).
 
 
-**Note**: To upgrade to a newer version, you need to redo those steps.
+**Note**: Update by redoing those steps.
 
 INSTALL - FIREFOX & OTHER
 -------------------------
 
-* Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon that will manage the script
+* Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon.
 
 * Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): Greasemonkey should open a dialog window to allow the script installation. Click *Install* and you're all set!
 
@@ -33,25 +36,28 @@ INSTALL - FIREFOX & OTHER
 USAGE
 -----
 
-Go to a video on [ARTE+7 website](http://www.arte.tv/guide/fr/plus7) and you should see 4 buttons under the video:
+Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons under a video:
 
-* Download **High** Quality
-* Download **Standard** Quality
-* Download **Low** Quality
-* Download **Metadata** (Text file containing the video metadata)
+* **Select** the language version.
+* **Download** in the available qualities.
+
+In case of a livestream/direct, there are 2 options :
+* Download the MP4 video
+* Copy/paste the streaming link into [VLC](http://www.videolan.org/vlc/) and dump it to your drive.
 
 FAQ
 ---
 
-**Why should I use this script?**
+**Why should I use this script ?**
 
-If you are like me, and often travel with poor Internet connections, this allows you to easily download ARTE+7 videos and watch them later.
+If you often travel with poor Internet connections, now you can download videos to watch them later.
 
-**Why ARTE+7?**
+**Why ARTE ?**
 
-ARTE channel is an amazing place for culture. I don't have a TV at home and ARTE+7 is my only way to watch those programs after they've been live.
+ARTE channel is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
 
-WARNING
+
+DISCLAIMER
 -------
 
-Remember that this script is for personal use only. I'm not responsible for any usage which could be against ARTE+7 privacy policy.
+This script is for personal use only. You alone have the responsability for any usage which could be against ARTE privacy policy.
