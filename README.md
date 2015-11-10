@@ -43,7 +43,7 @@ Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons 
 
 In case of a livestream/direct, there are 2 options :
 * Download the MP4 video
-* Copy/paste the streaming link into [VLC](http://www.videolan.org/vlc/) and dump it to your drive.
+* Copy/paste the streaming link into [VLC](http://www.videolan.org/vlc/) and dump it to your drive with its convert tool (CTRL+R).
 
 FAQ
 ---
