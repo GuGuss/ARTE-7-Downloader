@@ -116,7 +116,7 @@ function createButton(quality, language) {
     }
 
     // Check HTTP
-    else if (nbHTTP > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length - 1) === ".mp4") {
+    else if (nbHTTP > 0 && (videoUrl.substring(videoUrl.length - 5, videoUrl.length - 1) === ".mp4")) {
         button.innerHTML = "<strong>" + quality + "</strong> Quality MP4 <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
