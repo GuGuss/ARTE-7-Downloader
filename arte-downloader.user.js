@@ -111,21 +111,21 @@ function createButton(quality, language) {
     }
 
     // Check RTMP stream
-    if ( nbRTMP > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
+    if (nbRTMP > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
         button.innerHTML = quality + " Quality <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-    // Check HTTP
-    else if (nbHTTP > 0 && (videoUrl.substring(videoUrl.length - 5, videoUrl.length - 1) === ".mp4")) {
+        // Check HTTP
+    else if (nbHTTP > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
         button.innerHTML = "<strong>" + quality + "</strong> Quality MP4 <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-    // Check HLS stream : should not happen
-    else if (nbHLS > 0 && videoUrl.substring(videoUrl.length - 6, videoUrl.length - 1) === ".m3u8") {
+        // Check HLS stream : should not happen
+    else if (nbHLS > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
         button.innerHTML = quality + "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'>HLS master stream</a> (copy/paste into Apple Quicktime or <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-    // Unknown URL format : should not happen
+        // Unknown URL format : should not happen
     else {
         console.log('Unknown URL format');
         return null;
