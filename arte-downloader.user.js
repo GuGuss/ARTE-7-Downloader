@@ -19,12 +19,13 @@ else {
     console.log('GM debug mode enabled');
 }
 
-var videoPlayerURL = "arte_vp_url";
-var videoPlayerLiveURL = "arte_vp_live-url";
-var videoPlayerCreativeURL = "data-url";
-var videoPlayerDataTeaser = 'data-teaser-url';
+var videoPlayer = {
+    '+7': 'arte_vp_url',
+    'live': 'arte_vp_live-url',
+    'generic': 'data-url',
+    'teaser': 'data-teaser-url'
+};
 var playerJson = null;
-var isLiveStreaming = true;
 var nbVideos = 0;
 var nbHTTP = 0;
 var nbRTMP = 0;
@@ -250,16 +251,16 @@ function parsePlayerJson(playerUrl, videoElement) {
 function decorateVideo(videoElement) {
 
     // Get player URL
-    var playerUrl = videoElement.getAttribute(videoPlayerURL);
+    var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
     // If no URL found, try livestream tag
     if (playerUrl === null) {
-        playerUrl = videoElement.getAttribute(videoPlayerLiveURL);
+        playerUrl = videoElement.getAttribute(videoPlayer['live']);
 
         // Generic tag
         if (playerUrl === null) {
-            playerUrl = videoElement.getAttribute(videoPlayerCreativeURL);
+            playerUrl = videoElement.getAttribute(videoPlayer['generic']);
             if (playerUrl === null) {
-                playerUrl = videoElement.getAttribute(videoPlayerDataTeaser);
+                playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
                 parsePlayerJson(playerUrl, videoElement);
             }
             parsePlayerJson(playerUrl, videoElement);
@@ -285,7 +286,7 @@ function decorateVideo(videoElement) {
                     // not found ? Look for playlist file inside the livestream player
                     if (playerUrl === undefined) {
                         console.log("Video player URL not available. Fetching livestream player URL");
-                        playerUrl = videoElement.getAttribute(videoPlayerLiveURL);
+                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
                         parsePlayerJson(playerUrl, videoElement);
                     } else {
                         parsePlayerJson(playerUrl, videoElement);
@@ -383,18 +384,19 @@ function getVideoUrl(quality, language) {
 /*
  * main: script entry
  */
-var videoPlayerElement = document.querySelector("div[" + videoPlayerLiveURL + "]");
+var videoPlayerElement = document.querySelector("div[" + videoPlayer['live'] + "]");
 
 // Check if not a livestream
 if (videoPlayerElement === null) {
-    isLiveStreaming = false;
-    videoPlayerElement = document.querySelector("div[" + videoPlayerURL + "]");
+    videoPlayerElement = document.querySelector("div[" + videoPlayer['+7'] + "]");
 
     // Check Creative 
     if (videoPlayerElement === null) {
-        videoPlayerElement = document.querySelector("div[" + videoPlayerCreativeURL + "]");
+        videoPlayerElement = document.querySelector("div[" + videoPlayer['generic'] + "]");
+
+        // Check info
         if (videoPlayerElement === null) {
-            videoPlayerElement = document.querySelector("div[" + videoPlayerDataTeaser + "]");
+            videoPlayerElement = document.querySelector("div[" + videoPlayer['teaser'] + "]");
 
         }
     }
