@@ -1,7 +1,7 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **2.1.2**.
+Current version: **2.2.0**.
 
 CONTRIBUTORS
 -----------
