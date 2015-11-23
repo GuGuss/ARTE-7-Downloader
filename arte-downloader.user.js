@@ -3,11 +3,18 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.2.0
+// @version     2.2.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
 // ==/UserScript==
+
+/*
+    @TODO
+    - change language with multiple videos. eg: http://future.arte.tv/fr/les-iles-du-futur-la-serie-documentaire
+    - Arte cinema overlay. eg. : http://cinema.arte.tv/fr/program/jude
+    - Arte creative double decoration. eg: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+*/
 
 // Set this to 1 to enable console logs.
 var debug_mode = 1;
@@ -323,7 +330,7 @@ function getMetadata() {
  * @TODO : parse once the .json
  */
 function getVideoUrl(quality, language) {
-    console.log("\n... Looking for a " + quality + " quality track in " + language)
+    console.log("... Looking for a " + quality + " quality track in " + language)
 
     // Get videos object
     var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
@@ -384,23 +391,27 @@ function getVideoUrl(quality, language) {
 /*
  * main: script entry
  */
-var videoPlayerElement = document.querySelector("div[" + videoPlayer['live'] + "]");
+var videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['live'] + "]");
 
 // Check if not a livestream
-if (videoPlayerElement === null) {
-    videoPlayerElement = document.querySelector("div[" + videoPlayer['+7'] + "]");
+if (videoPlayerElements.length === 0) {
+    videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['+7'] + "]");
 
     // Check Creative 
-    if (videoPlayerElement === null) {
-        videoPlayerElement = document.querySelector("div[" + videoPlayer['generic'] + "]");
+    if (videoPlayerElements.length === 0) {
+        videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['generic'] + "]");
 
         // Check info
-        if (videoPlayerElement === null) {
-            videoPlayerElement = document.querySelector("div[" + videoPlayer['teaser'] + "]");
+        if (videoPlayerElements.length === 0) {
+            videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
 
         }
     }
 }
 
+console.log("Found " + videoPlayerElements.length + " video players");
+
 // Inject buttons in the video's face
-decorateVideo(videoPlayerElement);
+for (var i = 0; i < videoPlayerElements.length; i++) {
+    decorateVideo(videoPlayerElements[i]);
+}
