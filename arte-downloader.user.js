@@ -11,9 +11,12 @@
 
 /*
     @TODO
-    - change language with multiple videos. eg: http://future.arte.tv/fr/les-iles-du-futur-la-serie-documentaire
-    - Arte cinema overlay. eg. : http://cinema.arte.tv/fr/program/jude
-    - Arte creative double decoration. eg: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+    - change language with multiple videos: http://future.arte.tv/fr/les-iles-du-futur-la-serie-documentaire
+    - Arte future overlay: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
+    - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
+    - Arte creative double decoration: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+    - Arte info triple decoration: http://info.arte.tv/fr/videos?id=71611
+    - Arte info journal overlay: http://info.arte.tv/fr/emissions/arte-journal
 */
 
 // Set this to 1 to enable console logs.
