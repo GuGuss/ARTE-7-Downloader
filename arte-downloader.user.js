@@ -11,7 +11,6 @@
 
 /*
     @TODO
-    - change language with multiple videos: http://future.arte.tv/fr/les-iles-du-futur-la-serie-documentaire
     - Arte future overlay: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
     - Arte creative double decoration: http://creative.arte.tv/fr/episode/bonjour-afghanistan
@@ -29,17 +28,18 @@ else {
     console.log('GM debug mode enabled');
 }
 
+var playerJson = null;
+var nbVideos;
+var nbHTTP;
+var nbRTMP;
+var nbHLS;
+
 var videoPlayer = {
     '+7': 'arte_vp_url',
     'live': 'arte_vp_live-url',
     'generic': 'data-url',
     'teaser': 'data-teaser-url'
 };
-var playerJson = null;
-var nbVideos = 0;
-var nbHTTP = 0;
-var nbRTMP = 0;
-var nbHLS = 0;
 
 var qualityCode = {
     'Low': 'HQ',
@@ -67,22 +67,19 @@ var languages = {
     'VAAUD': 'German with audio description'
 };
 
-var availableLanguages = Object.assign({}, languages); // Clone object
-for (l in availableLanguages) {
-    availableLanguages[l] = 0;
-}
+var availableLanguages;
 
-function addLanguage(language) {
-    if (availableLanguages[language] === 0) {
-        availableLanguages[language] = languages[language];
+function addLanguage(videoElementIndex, language) {
+    if (availableLanguages[videoElementIndex][language] === 0) {
+        availableLanguages[videoElementIndex][language] = languages[language];
     }
 }
 
-function preParsePlayerJson() {
+function preParsePlayerJson(videoElementIndex) {
     if (playerJson) {
         var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
         var video = null;
-        nbVideos = videos.length;
+        nbVideos[videoElementIndex] = videos.length;
 
         // Loop through all videos URLs.
         for (var key in videos) {
@@ -90,33 +87,38 @@ function preParsePlayerJson() {
 
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
-                nbHTTP++;
+                nbHTTP[videoElementIndex]++;
+                //console.log(nbHTTP[videoElementIndex]);
             }
             else if (video["videoFormat"] === "RMP4") {
-                nbRTMP++;
+                nbRTMP[videoElementIndex]++;
             }
             else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
-                nbHLS++;
+                nbHLS[videoElementIndex]++;
             }
 
             // Add the language
-            addLanguage(video["versionCode"]);
+            addLanguage(videoElementIndex, video["versionCode"]);
             //console.log(video["versionCode"]) // find new lang tags
         }
 
-        console.log("\n" + nbVideos + " versions found:\n- " + nbHTTP + " HTTP videos\n- " + nbRTMP + " RTMP streams\n- " + nbHLS + " HLS streams.");
-        console.log("Languages found:");
-        for (l in availableLanguages) {
-            if (availableLanguages[l] !== 0) {
-                console.log("- " + availableLanguages[l]);
+        console.log("\n====================================\n              player #" + videoElementIndex + "\n====================================\n> "
+            + nbVideos[videoElementIndex] + " formats:\n- "
+            + nbHTTP[videoElementIndex] + " HTTP videos,\n- "
+            + nbRTMP[videoElementIndex] + " RTMP streams,\n- "
+            + nbHLS[videoElementIndex] + " HLS streams.");
+        console.log("> Languages:");
+        for (l in availableLanguages[videoElementIndex]) {
+            if (availableLanguages[videoElementIndex][l] !== 0) {
+                console.log("- " + availableLanguages[videoElementIndex][l]);
             }
         }
     }
 }
 
-function createButton(quality, language) {
+function createButton(videoElementIndex, quality, language) {
     var button = document.createElement('a');
-    var videoUrl = getVideoUrl(qualityCode[quality], language);
+    var videoUrl = getVideoUrl(videoElementIndex, qualityCode[quality], language);
 
     // Check if video exists
     if (videoUrl === null) {
@@ -125,17 +127,17 @@ function createButton(quality, language) {
     }
 
     // Check RTMP stream
-    if (nbRTMP > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
+    if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
         button.innerHTML = quality + " Quality <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
-    else if (nbHTTP > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
+    else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
         button.innerHTML = "<strong>" + quality + "</strong> Quality MP4 <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HLS stream : should not happen
-    else if (nbHLS > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
+    else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
         button.innerHTML = quality + "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> HLS master stream</a> (copy/paste into Apple Quicktime or <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
@@ -145,7 +147,7 @@ function createButton(quality, language) {
         return null;
     }
 
-    button.setAttribute('id', 'btnDownload' + qualityCode[quality]); // to refer later in select changes
+    button.setAttribute('id', 'btnDownload' + videoElementIndex + qualityCode[quality]); // to refer later in select changes
     button.setAttribute('href', videoUrl);
     button.setAttribute('target', '_blank');
     button.setAttribute('download', getVideoName(quality));
@@ -175,25 +177,23 @@ function createButtonMetadata(element) {
     return button;
 }
 
-function createLanguageComboBox() {
+function createLanguageComboBox(videoElementIndex) {
     var languageComboBox = document.createElement('select');
 
     // Associate onchange event with function (bypass for GM)
     languageComboBox.onchange = function () {
         var newLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
-        console.log("\nLanguage changed to " + newLanguage);
+        console.log("\n> Language changed to " + newLanguage);
         for (key in qualityCode) {
-            var btn = document.getElementById('btnDownload' + qualityCode[key]);
-            var url = getVideoUrl(qualityCode[key], newLanguage);
+            var btn = document.getElementById('btnDownload' + videoElementIndex + qualityCode[key]);
+            var url = getVideoUrl(videoElementIndex, qualityCode[key], newLanguage);
             btn.setAttribute('href', url);
         }
     };
 
-    languageComboBox.setAttribute("id", "languageComboBox");
-
-    for (l in availableLanguages) {
-        if (availableLanguages[l] !== 0) {
-            languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[l] + "</option>";
+    for (l in availableLanguages[videoElementIndex]) {
+        if (availableLanguages[videoElementIndex][l] !== 0) {
+            languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[videoElementIndex][l] + "</option>";
         }
     }
     languageComboBox.setAttribute('class', 'btn btn-default');
@@ -202,7 +202,9 @@ function createLanguageComboBox() {
     return languageComboBox;
 }
 
-function createButtons(videoElement) {
+function createButtons(videoElement, videoElementIndex) {
+    console.log("\n");
+
     // container
     var parent = videoElement.parentNode.parentNode;
     var container = document.createElement('div');
@@ -210,7 +212,7 @@ function createButtons(videoElement) {
     container.setAttribute('style', 'display: table; width: 100%;');
 
     // language combobox
-    var languageComboBox = createLanguageComboBox()
+    var languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
     var selectedLanguage;
 
@@ -222,15 +224,15 @@ function createButtons(videoElement) {
     // download buttons
     container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
 
-    var tempButton = createButton('Low', selectedLanguage)
+    var tempButton = createButton(videoElementIndex, 'Low', selectedLanguage)
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
-    tempButton = createButton('Standard', selectedLanguage);
+    tempButton = createButton(videoElementIndex, 'Standard', selectedLanguage);
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
-    tempButton = createButton('High', selectedLanguage);
+    tempButton = createButton(videoElementIndex, 'High', selectedLanguage);
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
@@ -244,21 +246,21 @@ function createButtons(videoElement) {
     parent.appendChild(credit);
 }
 
-function parsePlayerJson(playerUrl, videoElement) {
-    console.log('Video player json: ' + playerUrl);
+function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
+    console.log('- player #' + videoElementIndex + ' JSON: ' + playerUrl);
     GM_xmlhttpRequest({
         method: "GET",
         url: playerUrl,
         onload: function (response) {
             playerJson = JSON.parse(response.responseText);
-            preParsePlayerJson();
-            createButtons(videoElement);
+            preParsePlayerJson(videoElementIndex);
+            createButtons(videoElement, videoElementIndex);
         }
     });
 }
 
 // Decorates a video with download buttons
-function decorateVideo(videoElement) {
+function decorateVideo(videoElement, videoElementIndex) {
 
     // Get player URL
     var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
@@ -271,15 +273,16 @@ function decorateVideo(videoElement) {
             playerUrl = videoElement.getAttribute(videoPlayer['generic']);
             if (playerUrl === null) {
                 playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
-                parsePlayerJson(playerUrl, videoElement);
             }
-            parsePlayerJson(playerUrl, videoElement);
+
+            parsePlayerJson(playerUrl, videoElement, videoElementIndex);
         }
     }
 
     // Check if player URL points to a JSON
     if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        parsePlayerJson(playerUrl, videoElement);
+        console.log("TRYEE")
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     } else {
 
         // Find the player JSON in the URL
@@ -297,11 +300,9 @@ function decorateVideo(videoElement) {
                     if (playerUrl === undefined) {
                         console.log("Video player URL not available. Fetching livestream player URL");
                         playerUrl = videoElement.getAttribute(videoPlayer['live']);
-                        parsePlayerJson(playerUrl, videoElement);
-                    } else {
-                        parsePlayerJson(playerUrl, videoElement);
                     }
-
+                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+                    s
                 }
             }
         );
@@ -332,14 +333,14 @@ function getMetadata() {
  * Parse the content of the JSON file and extract the MP4 videos URLs in the required language.
  * @TODO : parse once the .json
  */
-function getVideoUrl(quality, language) {
-    console.log("... Looking for a " + quality + " quality track in " + language)
+function getVideoUrl(videoElementIndex, quality, language) {
+    console.log("> Looking for a " + quality + " quality track in " + language)
 
     // Get videos object
     var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
 
     // Check if there are HTTP videos
-    if (nbHTTP > 0) {
+    if (nbHTTP[videoElementIndex] > 0) {
 
         // Loop through all videos URLs.
         for (var key in videos) {
@@ -363,7 +364,7 @@ function getVideoUrl(quality, language) {
     }
 
     // Search RTMP streams
-    if (nbRTMP > 0) {
+    if (nbRTMP[videoElementIndex] > 0) {
         for (var key in videos) {
             var video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
             if (video["videoFormat"] === "RMP4" && (video["VQU"] === quality || video["quality"] === quality)) {
@@ -375,7 +376,7 @@ function getVideoUrl(quality, language) {
     }
 
     // Search HLS streams (should not at that point, but we never know)
-    if (nbHLS > 0) {
+    if (nbHLS[videoElementIndex] > 0) {
         for (var key in videos) {
             var video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
             if ((video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") && (video["VQU"] === quality || video["quality"] === quality)) {
@@ -394,27 +395,49 @@ function getVideoUrl(quality, language) {
 /*
  * main: script entry
  */
-var videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['live'] + "]");
+main();
 
-// Check if not a livestream
-if (videoPlayerElements.length === 0) {
-    videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['+7'] + "]");
+function main() {
+    var videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['live'] + "]");
 
-    // Check Creative 
+    // Check if not a livestream
     if (videoPlayerElements.length === 0) {
-        videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['generic'] + "]");
+        videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['+7'] + "]");
 
-        // Check info
+        // Check Creative 
         if (videoPlayerElements.length === 0) {
-            videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
+            videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['generic'] + "]");
 
+            // Check info
+            if (videoPlayerElements.length === 0) {
+                videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
+
+            }
         }
     }
-}
 
-console.log("Found " + videoPlayerElements.length + " video players");
+    var nbVideoPlayers = videoPlayerElements.length
+    console.log("Found " + nbVideoPlayers + " video players");
 
-// Inject buttons in the video's face
-for (var i = 0; i < videoPlayerElements.length; i++) {
-    decorateVideo(videoPlayerElements[i]);
+    // Initialize players info storage
+    nbVideos = new Array(nbVideoPlayers);
+    nbHTTP = new Array(nbVideoPlayers);
+    nbRTMP = new Array(nbVideoPlayers);
+    nbHLS = new Array(nbVideoPlayers);
+    availableLanguages = new Array(nbVideoPlayers);
+    for (i = 0; i < nbVideoPlayers; i++) {
+        nbVideos[i] = 0;
+        nbHTTP[i] = 0;
+        nbRTMP[i] = 0;
+        nbHLS[i] = 0;
+        availableLanguages[i] = Object.assign({}, languages); // Clone object
+        for (l in availableLanguages[i]) {
+            availableLanguages[i][l] = 0;
+        }
+    }
+
+    // Inject buttons in the video's face
+    for (var i = 0; i < nbVideoPlayers; i++) {
+        decorateVideo(videoPlayerElements[i], i);
+    }
 }
