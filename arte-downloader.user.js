@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.2.1
+// @version     2.2.2
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -28,6 +28,8 @@ else {
     console.log('GM debug mode enabled');
 }
 
+// TODO: struct array instead of this garbage
+// eg.: player[i].nbHTTP
 var playerJson = null;
 var nbVideos;
 var nbHTTP;
@@ -42,11 +44,13 @@ var videoPlayer = {
 };
 
 var qualityCode = {
-    'Low': 'HQ',
-    'Standard': 'EQ',
-    'High': 'SQ'
+    '216p (300 kbps)': 'MQ', // 300 kbps
+    '406p (800 kbps)': 'HQ', // 800 kbps
+    '406p (1500 kbps)': 'EQ', // 1500 kbps
+    '720p (2200 kbps)': 'SQ' // 2200 kbps
 };
 
+// Reference languages object
 var languages = {
     // 'versionCode'    : 'language'
     'VO': 'Original',
@@ -133,7 +137,7 @@ function createButton(videoElementIndex, quality, language) {
 
         // Check HTTP
     else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
-        button.innerHTML = "<strong>" + quality + "</strong> Quality MP4 <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = quality + " <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HLS stream : should not happen
@@ -151,16 +155,19 @@ function createButton(videoElementIndex, quality, language) {
     button.setAttribute('href', videoUrl);
     button.setAttribute('target', '_blank');
     button.setAttribute('download', getVideoName(quality));
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'text-align: center; display: table-cell;');
 
+    // Keeping uniform style
+    button.setAttribute('class', 'btn btn-default');
+    button.setAttribute('style', 'text-align: center; display: table-cell; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return button;
 }
 
 function createButtonMetadata(element) {
     var button = document.createElement('a');
+
+    // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'text-align: center; display: table-cell;');
+    button.setAttribute('style', 'text-align: center; display: table-cell; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     button.innerHTML = "<strong>Metadata</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     var metadata = getMetadata(playerJson);
@@ -196,8 +203,10 @@ function createLanguageComboBox(videoElementIndex) {
             languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[videoElementIndex][l] + "</option>";
         }
     }
+
+    // Keeping uniform style
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', 'width:97%');
+    languageComboBox.setAttribute('style', 'width:97%; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return languageComboBox;
 }
@@ -224,30 +233,34 @@ function createButtons(videoElement, videoElementIndex) {
     // download buttons
     container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
 
-    var tempButton = createButton(videoElementIndex, 'Low', selectedLanguage)
+    var tempButton = createButton(videoElementIndex, '216p (300 kbps)', selectedLanguage)
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
-    tempButton = createButton(videoElementIndex, 'Standard', selectedLanguage);
+    tempButton = createButton(videoElementIndex, '406p (800 kbps)', selectedLanguage);
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
-    tempButton = createButton(videoElementIndex, 'High', selectedLanguage);
+    tempButton = createButton(videoElementIndex, '406p (1500 kbps)', selectedLanguage);
+    if (tempButton !== null) {
+        container.appendChild(tempButton);
+    }
+    tempButton = createButton(videoElementIndex, '720p (2200 kbps)', selectedLanguage);
     if (tempButton !== null) {
         container.appendChild(tempButton);
     }
 
     // credit
     var credit = document.createElement('div');
-    credit.setAttribute('style', 'width: 100%; text-align: center; font-size: 0.8em; padding: 3px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+    credit.setAttribute('style', 'width: 100%; text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 3px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
     credit.innerHTML = 'Arte Downloader v.' + GM_info.script.version
                     + ' built by and for the community with love'
-                    + '<br /><a href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+                    + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
     parent.appendChild(credit);
 }
 
 function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
-    console.log('- player #' + videoElementIndex + ' JSON: ' + playerUrl);
+    console.log('- #' + videoElementIndex + ' player JSON: ' + playerUrl);
     GM_xmlhttpRequest({
         method: "GET",
         url: playerUrl,
@@ -419,7 +432,7 @@ function main() {
     var nbVideoPlayers = videoPlayerElements.length
     console.log("Found " + nbVideoPlayers + " video players");
 
-    // Initialize players info storage
+    // Initialize players info arrays
     nbVideos = new Array(nbVideoPlayers);
     nbHTTP = new Array(nbVideoPlayers);
     nbRTMP = new Array(nbVideoPlayers);
@@ -430,7 +443,11 @@ function main() {
         nbHTTP[i] = 0;
         nbRTMP[i] = 0;
         nbHLS[i] = 0;
-        availableLanguages[i] = Object.assign({}, languages); // Clone object
+
+        // Clone from base object
+        availableLanguages[i] = Object.assign({}, languages);
+
+        // Resets
         for (l in availableLanguages[i]) {
             availableLanguages[i][l] = 0;
         }
