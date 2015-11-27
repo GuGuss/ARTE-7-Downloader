@@ -154,7 +154,7 @@ function createButtonDownload(videoElementIndex, language, quality) {
 
     // Check RTMP stream
     if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
-        button.innerHTML = "<strong>Copy/paste this " + quality + " <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> link into <a href='https://www.videolan.org/vlc/'>VLC</a> and dump it with CTRL+R</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<strong>Open this <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP</a> stream link into <a href='https://www.videolan.org/vlc/'>VLC</a>. Save it with CTRL+R > network</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
