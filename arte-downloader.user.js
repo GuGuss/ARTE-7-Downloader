@@ -44,10 +44,10 @@ var videoPlayer = {
 };
 
 var qualityCode = {
-    '216p (300 kbps)': 'MQ', // 300 kbps
-    '406p (800 kbps)': 'HQ', // 800 kbps
-    '406p (1500 kbps)': 'EQ', // 1500 kbps
-    '720p (2200 kbps)': 'SQ' // 2200 kbps
+    '720p (2200 kbps)': 'SQ',
+    '406p (1500 kbps)': 'EQ',
+    '406p (800 kbps)': 'HQ',
+    '216p (300 kbps)': 'MQ'
 };
 
 // Reference languages object
@@ -120,7 +120,7 @@ function preParsePlayerJson(videoElementIndex) {
     }
 }
 
-function createButton(videoElementIndex, quality, language) {
+function createButtonDownload(videoElementIndex, language, quality) {
     var button = document.createElement('a');
     var videoUrl = getVideoUrl(videoElementIndex, qualityCode[quality], language);
 
@@ -132,12 +132,12 @@ function createButton(videoElementIndex, quality, language) {
 
     // Check RTMP stream
     if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
-        button.innerHTML = quality + " Quality <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = quality + "<a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'> RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
     else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
-        button.innerHTML = quality + " <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HLS stream : should not happen
@@ -151,14 +151,14 @@ function createButton(videoElementIndex, quality, language) {
         return null;
     }
 
-    button.setAttribute('id', 'btnDownload' + videoElementIndex + qualityCode[quality]); // to refer later in select changes
+    button.setAttribute('id', 'btnDownload' + videoElementIndex); // to refer later in select changes
     button.setAttribute('href', videoUrl);
     button.setAttribute('target', '_blank');
     button.setAttribute('download', getVideoName(quality));
 
     // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'text-align: center; display: table-cell; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    button.setAttribute('style', 'margin-left:10px; text-align: center; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return button;
 }
 
@@ -167,8 +167,8 @@ function createButtonMetadata(element) {
 
     // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'text-align: center; display: table-cell; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    button.innerHTML = "<strong>Metadata</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
+    button.setAttribute('style', 'margin-left:10px; text-align: center; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    button.innerHTML = "Download metadata <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     var metadata = getMetadata(playerJson);
 
@@ -184,20 +184,26 @@ function createButtonMetadata(element) {
     return button;
 }
 
+function getComboboxSelectedValue(combobox) {
+    var cb = document.getElementById(combobox);
+    return cb[cb.selectedIndex].value;
+}
+
 function createLanguageComboBox(videoElementIndex) {
     var languageComboBox = document.createElement('select');
+    languageComboBox.setAttribute('id', 'cbLanguage' + videoElementIndex);
 
     // Associate onchange event with function (bypass for GM)
     languageComboBox.onchange = function () {
-        var newLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
-        console.log("\n> Language changed to " + newLanguage);
-        for (key in qualityCode) {
-            var btn = document.getElementById('btnDownload' + videoElementIndex + qualityCode[key]);
-            var url = getVideoUrl(videoElementIndex, qualityCode[key], newLanguage);
-            btn.setAttribute('href', url);
-        }
+        var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+        console.log("\n> Language changed to " + selectedLanguage);
+        var btn = document.getElementById('btnDownload' + videoElementIndex);
+        var selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
+        var url = getVideoUrl(videoElementIndex, qualityCode[selectedQuality], selectedLanguage);
+        btn.setAttribute('href', url);
     };
 
+    // Fill options
     for (l in availableLanguages[videoElementIndex]) {
         if (availableLanguages[videoElementIndex][l] !== 0) {
             languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[videoElementIndex][l] + "</option>";
@@ -206,9 +212,35 @@ function createLanguageComboBox(videoElementIndex) {
 
     // Keeping uniform style
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', 'width:97%; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    languageComboBox.setAttribute('style', 'color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return languageComboBox;
+}
+
+function createQualityComboBox(videoElementIndex) {
+    var qualityComboBox = document.createElement('select');
+    qualityComboBox.setAttribute('id', 'cbQuality' + videoElementIndex);
+
+    // Associate onchange event with function (bypass for GM)
+    qualityComboBox.onchange = function () {
+        var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
+        console.log("\n> Quality changed to " + selectedQuality);
+        var btn = document.getElementById('btnDownload' + videoElementIndex);
+        var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
+        var url = getVideoUrl(videoElementIndex, qualityCode[selectedQuality], selectedLanguage);
+        btn.setAttribute('href', url);
+    };
+
+    // Fill options
+    for (q in qualityCode) {
+        qualityComboBox.innerHTML += "<option value='" + q + "'>" + q + "</option>";
+    }
+
+    // Keeping uniform style
+    qualityComboBox.setAttribute('class', 'btn btn-default');
+    qualityComboBox.setAttribute('style', 'margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+
+    return qualityComboBox;
 }
 
 function createButtons(videoElement, videoElementIndex) {
@@ -218,9 +250,9 @@ function createButtons(videoElement, videoElementIndex) {
     var parent = videoElement.parentNode.parentNode;
     var container = document.createElement('div');
     parent.appendChild(container);
-    container.setAttribute('style', 'display: table; width: 100%;');
+    container.setAttribute('style', 'display: table; width: 100%');
 
-    // language combobox
+    // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
     var selectedLanguage;
@@ -230,25 +262,24 @@ function createButtons(videoElement, videoElementIndex) {
         selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
     }
 
-    // download buttons
-    container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
+    // Create quality combobox
+    var qualityComboBox = createQualityComboBox(videoElementIndex)
+    container.appendChild(qualityComboBox);
+    var selectedQuality;
 
-    var tempButton = createButton(videoElementIndex, '216p (300 kbps)', selectedLanguage)
-    if (tempButton !== null) {
-        container.appendChild(tempButton);
+    // Check if there are quality available to select
+    if (qualityComboBox.options.length > 0) {
+        selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
     }
-    tempButton = createButton(videoElementIndex, '406p (800 kbps)', selectedLanguage);
-    if (tempButton !== null) {
-        container.appendChild(tempButton);
+
+    // Create download button
+    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage, selectedQuality)
+    if (btnDownload !== null) {
+        container.appendChild(btnDownload);
     }
-    tempButton = createButton(videoElementIndex, '406p (1500 kbps)', selectedLanguage);
-    if (tempButton !== null) {
-        container.appendChild(tempButton);
-    }
-    tempButton = createButton(videoElementIndex, '720p (2200 kbps)', selectedLanguage);
-    if (tempButton !== null) {
-        container.appendChild(tempButton);
-    }
+
+    // Create metadata button
+    container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
 
     // credit
     var credit = document.createElement('div');
@@ -277,6 +308,7 @@ function decorateVideo(videoElement, videoElementIndex) {
 
     // Get player URL
     var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
+
     // If no URL found, try livestream tag
     if (playerUrl === null) {
         playerUrl = videoElement.getAttribute(videoPlayer['live']);
@@ -347,7 +379,7 @@ function getMetadata() {
  * @TODO : parse once the .json
  */
 function getVideoUrl(videoElementIndex, quality, language) {
-    console.log("> Looking for a " + quality + " quality track in " + language)
+    console.log("> #" + videoElementIndex + " player looking for a " + quality + " quality track in " + language)
 
     // Get videos object
     var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
