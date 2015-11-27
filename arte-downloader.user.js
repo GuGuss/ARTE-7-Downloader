@@ -3,19 +3,26 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.2.2
+// @version     2.3
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
 // ==/UserScript==
 
 /*
+    Works for: 
+    - Arte live: http://www.arte.tv/guide/fr/direct
+    - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
+    - Arte info: http://info.arte.tv/fr/videos?id=71611
+    - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+    - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+    - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+
     @TODO
-    - Arte future overlay: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
+    - 360°: http://future.arte.tv/fr/5-metres
     - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
-    - Arte creative double decoration: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-    - Arte info triple decoration: http://info.arte.tv/fr/videos?id=71611
-    - Arte info journal overlay: http://info.arte.tv/fr/emissions/arte-journal
+    - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
+    - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
 */
 
 // Set this to 1 to enable console logs.
@@ -30,7 +37,7 @@ else {
 
 // TODO: struct array instead of this garbage
 // eg.: player[i].nbHTTP
-var playerJson = null;
+var playerJson;
 var nbVideos;
 var nbHTTP;
 var nbRTMP;
@@ -80,14 +87,14 @@ function addLanguage(videoElementIndex, language) {
 }
 
 function preParsePlayerJson(videoElementIndex) {
-    if (playerJson) {
-        var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
+    if (playerJson[videoElementIndex]) {
+        var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
         var video = null;
         nbVideos[videoElementIndex] = videos.length;
 
         // Loop through all videos URLs.
         for (var key in videos) {
-            video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
+            video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
 
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
@@ -154,7 +161,7 @@ function createButtonDownload(videoElementIndex, language, quality) {
     button.setAttribute('id', 'btnDownload' + videoElementIndex); // to refer later in select changes
     button.setAttribute('href', videoUrl);
     button.setAttribute('target', '_blank');
-    button.setAttribute('download', getVideoName(quality));
+    button.setAttribute('download', getVideoName(videoElementIndex, quality));
 
     // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
@@ -162,15 +169,15 @@ function createButtonDownload(videoElementIndex, language, quality) {
     return button;
 }
 
-function createButtonMetadata(element) {
+function createButtonMetadata(videoElementIndex, element) {
     var button = document.createElement('a');
 
     // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
     button.setAttribute('style', 'margin-left:10px; text-align: center; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    button.innerHTML = "Download metadata <span class='icomoon-angle-down force-icomoon-font'></span>";
+    button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
 
-    var metadata = getMetadata(playerJson);
+    var metadata = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'] + '\n\n' + playerJson[videoElementIndex]['videoJsonPlayer']['VDE'] + '\n\n' + playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
 
     // Properly encode to Base 64.
     var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
@@ -279,7 +286,7 @@ function createButtons(videoElement, videoElementIndex) {
     }
 
     // Create metadata button
-    container.appendChild(createButtonMetadata(videoElement)); // @TODO display instead of download
+    container.appendChild(createButtonMetadata(videoElementIndex, videoElement)); // @TODO display instead of download
 
     // credit
     var credit = document.createElement('div');
@@ -296,14 +303,14 @@ function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
         method: "GET",
         url: playerUrl,
         onload: function (response) {
-            playerJson = JSON.parse(response.responseText);
+            playerJson[videoElementIndex] = JSON.parse(response.responseText);
             preParsePlayerJson(videoElementIndex);
             createButtons(videoElement, videoElementIndex);
         }
     });
 }
 
-// Decorates a video with download buttons
+// Decorates a video with download buttons by parsing the player JSON
 function decorateVideo(videoElement, videoElementIndex) {
 
     // Get player URL
@@ -319,8 +326,6 @@ function decorateVideo(videoElement, videoElementIndex) {
             if (playerUrl === null) {
                 playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
             }
-
-            parsePlayerJson(playerUrl, videoElement, videoElementIndex);
         }
     }
 
@@ -354,42 +359,28 @@ function decorateVideo(videoElement, videoElementIndex) {
     }
 };
 
-/*
- * Parse the content of the JSON file and extract the video name.
- */
-function getVideoName(quality) {
+function getVideoName(videoElementIndex, quality) {
     var name;
-    name = (playerJson['videoJsonPlayer']['VTI']);
+    name = (playerJson[videoElementIndex]['videoJsonPlayer']['VTI']);
     if (name === null) {
-        name = (playerJson['videoJsonPlayer']['VST']['VNA']);
+        name = (playerJson[videoElementIndex]['videoJsonPlayer']['VST']['VNA']);
     }
     name = name.split('_').join(' ');
     return '[' + quality.toUpperCase() + '] ' + name.charAt(0).toUpperCase() + name.slice(1) + '.mp4';
 }
 
-/*
- * Parse the content of the JSON file and extract the metadata informations.
- */
-function getMetadata() {
-    return playerJson['videoJsonPlayer']['V7T'] + '\n\n' + playerJson['videoJsonPlayer']['VDE'] + '\n\n' + playerJson['videoJsonPlayer']['VTA'];
-}
-
-/*
- * Parse the content of the JSON file and extract the MP4 videos URLs in the required language.
- * @TODO : parse once the .json
- */
 function getVideoUrl(videoElementIndex, quality, language) {
     console.log("> #" + videoElementIndex + " player looking for a " + quality + " quality track in " + language)
 
     // Get videos object
-    var videos = Object.keys(playerJson["videoJsonPlayer"]["VSR"]);
+    var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
 
     // Check if there are HTTP videos
     if (nbHTTP[videoElementIndex] > 0) {
 
         // Loop through all videos URLs.
         for (var key in videos) {
-            var video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
+            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
 
             // Check if video format is "HBBTV" (HTTP).
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
@@ -411,7 +402,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
     // Search RTMP streams
     if (nbRTMP[videoElementIndex] > 0) {
         for (var key in videos) {
-            var video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
+            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if (video["videoFormat"] === "RMP4" && (video["VQU"] === quality || video["quality"] === quality)) {
                 var url = video["streamer"] + video["url"];
                 console.log("Found a RTMP stream: " + url);
@@ -423,7 +414,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
     // Search HLS streams (should not at that point, but we never know)
     if (nbHLS[videoElementIndex] > 0) {
         for (var key in videos) {
-            var video = playerJson["videoJsonPlayer"]["VSR"][videos[key]];
+            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if ((video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") && (video["VQU"] === quality || video["quality"] === quality)) {
                 var url = video["url"];
                 console.log("Found a HLS stream: " + url);
@@ -465,12 +456,14 @@ function main() {
     console.log("Found " + nbVideoPlayers + " video players");
 
     // Initialize players info arrays
+    playerJson = new Array(nbVideoPlayers);
     nbVideos = new Array(nbVideoPlayers);
     nbHTTP = new Array(nbVideoPlayers);
     nbRTMP = new Array(nbVideoPlayers);
     nbHLS = new Array(nbVideoPlayers);
     availableLanguages = new Array(nbVideoPlayers);
     for (i = 0; i < nbVideoPlayers; i++) {
+        playerJson[i] = 0;
         nbVideos[i] = 0;
         nbHTTP[i] = 0;
         nbRTMP[i] = 0;
