@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3
+// @version     2.3.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -42,6 +42,8 @@ var nbVideos;
 var nbHTTP;
 var nbRTMP;
 var nbHLS;
+var availableLanguages;
+var players = []; // players.push({});
 
 var videoPlayer = {
     '+7': 'arte_vp_url',
@@ -74,11 +76,11 @@ var languages = {
     'VOA-STF': 'Original in german subtitled in french',
     'VOF-STMF': 'Original in french for hearing impaired',
     'VOA-STMA': 'Original in german for hearing impaired',
+    'VF-STMF': 'French dubbed for hearing impaired',
+    'VA-STMA': 'German dubbed for hearing impaired',
     'VFAUD': 'French with audio description',
     'VAAUD': 'German with audio description'
 };
-
-var availableLanguages;
 
 function addLanguage(videoElementIndex, language) {
     if (availableLanguages[videoElementIndex][language] === 0) {
@@ -129,7 +131,20 @@ function preParsePlayerJson(videoElementIndex) {
 
 function createButtonDownload(videoElementIndex, language, quality) {
     var button = document.createElement('a');
-    var videoUrl = getVideoUrl(videoElementIndex, qualityCode[quality], language);
+    var videoUrl;
+    for (q in qualityCode) {
+        videoUrl = getVideoUrl(videoElementIndex, qualityCode[q], language);
+        if (videoUrl !== null) {
+            quality = q;
+            break;
+        }
+    }
+
+    // Failed to find any video feed
+    if (videoUrl === null) {
+        console.log("Could not find video feed");
+        return null;
+    }
 
     // Check if video exists
     if (videoUrl === null) {
@@ -139,7 +154,7 @@ function createButtonDownload(videoElementIndex, language, quality) {
 
     // Check RTMP stream
     if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
-        button.innerHTML = quality + "<a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'> RTMP stream</a> (copy/paste this link into<a href='https://www.videolan.org/vlc/'> VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<strong>Copy/paste this " + quality + " <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP stream</a> link into <a href='https://www.videolan.org/vlc/'>VLC</a> and dump it with CTRL+R</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
@@ -331,7 +346,6 @@ function decorateVideo(videoElement, videoElementIndex) {
 
     // Check if player URL points to a JSON
     if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        console.log("TRYEE")
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     } else {
 
@@ -405,7 +419,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if (video["videoFormat"] === "RMP4" && (video["VQU"] === quality || video["quality"] === quality)) {
                 var url = video["streamer"] + video["url"];
-                console.log("Found a RTMP stream: " + url);
+                console.log("Found a " + quality + "RTMP stream: " + url);
                 return (url);
             }
         }
