@@ -15,13 +15,17 @@
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
-    - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
+    - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
 
     @TODO
-    - 360: http://future.arte.tv/fr/5-metres
+    - arte concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
+    - 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
+        > player.html
+        > scenes/scene1.xml
+        > videourl="../video/video.mp4"
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
 
@@ -265,11 +269,24 @@ function createQualityComboBox(videoElementIndex) {
     return qualityComboBox;
 }
 
+function stringStartsWith(string, prefix) {
+    return string.slice(0, prefix.length) == prefix;
+}
+
 function createButtons(videoElement, videoElementIndex) {
     console.log("\n");
 
     // container
-    var parent = videoElement.parentNode.parentNode.parentNode;
+    var parent = videoElement.parentNode.parentNode;
+
+    if (stringStartsWith(location.href, "http://cinema.arte")   // Arte Cinema
+        || (parent.getAttribute('id') === "embed_widget"))        // Arte Future embedded
+    {
+        // Get parent to avoid being overlayed
+        parent = parent.parentNode;
+    }
+
+    // Append a <div> to the player
     var container = document.createElement('div');
     parent.appendChild(container);
     container.setAttribute('style', 'display: table; width: 100%');
@@ -325,53 +342,6 @@ function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
     });
 }
 
-// Decorates a video with download buttons by parsing the player JSON
-function decorateVideo(videoElement, videoElementIndex) {
-
-    // Get player URL
-    var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
-
-    // If no URL found, try livestream tag
-    if (playerUrl === null) {
-        playerUrl = videoElement.getAttribute(videoPlayer['live']);
-
-        // Generic tag
-        if (playerUrl === null) {
-            playerUrl = videoElement.getAttribute(videoPlayer['generic']);
-            if (playerUrl === null) {
-                playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
-            }
-        }
-    }
-
-    // Check if player URL points to a JSON
-    if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    } else {
-
-        // Find the player JSON in the URL
-        GM_xmlhttpRequest(
-            {
-                method: "GET",
-                url: playerUrl,
-                onload: function (response) {
-
-                    // Look for player URL inside the livestream player URL
-                    var json = JSON.parse(response.responseText);
-                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
-
-                    // not found ? Look for playlist file inside the livestream player
-                    if (playerUrl === undefined) {
-                        console.log("Video player URL not available. Fetching livestream player URL");
-                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
-                    }
-                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-                    s
-                }
-            }
-        );
-    }
-};
 
 function getVideoName(videoElementIndex, quality) {
     var name;
@@ -441,6 +411,56 @@ function getVideoUrl(videoElementIndex, quality, language) {
     console.log("...not found.")
     return null;
 }
+
+// Decorates a video with download buttons by parsing the player JSON
+function decorateVideo(videoElement, videoElementIndex) {
+
+    // Get player URL
+    var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
+
+    // If no URL found, try livestream tag
+    if (playerUrl === null) {
+        playerUrl = videoElement.getAttribute(videoPlayer['live']);
+
+        // Generic tag
+        if (playerUrl === null) {
+            playerUrl = videoElement.getAttribute(videoPlayer['generic']);
+            if (playerUrl === null) {
+                playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
+            }
+        }
+    }
+
+    // Check if player URL points to a JSON
+    if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+    } else {
+
+        // Find the player JSON in the URL
+        GM_xmlhttpRequest(
+            {
+                method: "GET",
+                url: playerUrl,
+                onload: function (response) {
+
+                    // Look for player URL inside the livestream player URL
+                    var json = JSON.parse(response.responseText);
+                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
+
+                    // not found ? Look for playlist file inside the livestream player
+                    if (playerUrl === undefined) {
+                        console.log("Video player URL not available. Fetching livestream player URL");
+                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
+                    }
+                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+                    s
+                }
+            }
+        );
+    }
+};
+
+
 
 /*
  * main: script entry
