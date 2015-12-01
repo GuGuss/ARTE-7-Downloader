@@ -1,7 +1,7 @@
 ARTE-7-PLAYGROUND
 =================
 
-Current version: **2.2.0**.
+Current version: **2.3.1**.
 
 CONTRIBUTORS
 -----------
@@ -39,11 +39,21 @@ USAGE
 Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons under a video:
 
 * **Select** the language version.
-* **Download** in the available qualities.
+* **Select** the quality.
+* **Download** either the video, or its description.
 
 In case of a livestream/direct, there are 2 options :
 * Download the MP4 video
 * Copy/paste the streaming link into [VLC](http://www.videolan.org/vlc/) and dump it to your drive with its convert tool (CTRL+R).
+
+TEST PAGES
+------- 
+- Arte live: http://www.arte.tv/guide/fr/direct
+- Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
+- Arte info: http://info.arte.tv/fr/videos?id=71611
+- Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+- Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+- Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
 
 FAQ
 ---
