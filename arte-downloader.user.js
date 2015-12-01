@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3.1
+// @version     2.3.2
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -15,13 +15,14 @@
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+    - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+    - Arte cinema: http://cinema.arte.tv/fr/program/jude
+
     @TODO
     - 360: http://future.arte.tv/fr/5-metres
-    - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
-    - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
 */
 
 // Set this to 1 to enable console logs.
@@ -268,7 +269,7 @@ function createButtons(videoElement, videoElementIndex) {
     console.log("\n");
 
     // container
-    var parent = videoElement.parentNode.parentNode;
+    var parent = videoElement.parentNode.parentNode.parentNode;
     var container = document.createElement('div');
     parent.appendChild(container);
     container.setAttribute('style', 'display: table; width: 100%');
