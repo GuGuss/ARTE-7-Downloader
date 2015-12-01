@@ -17,9 +17,8 @@
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
-
     @TODO
-    - 360°: http://future.arte.tv/fr/5-metres
+    - 360: http://future.arte.tv/fr/5-metres
     - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
     - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
