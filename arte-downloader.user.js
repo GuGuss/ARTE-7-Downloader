@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4.0
+// @version     2.3.4
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -14,6 +14,7 @@
     - Arte live: http://www.arte.tv/guide/fr/direct
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611
+    - Arte info royale slider: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
     - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
@@ -282,16 +283,21 @@ function createButtons(videoElement, videoElementIndex) {
     var parent;
 
     // Look for the parent to attach to
-    if (videoElement.nodeName === "IFRAME") {
+    if (videoElement.nodeName === "IFRAME") { // iframe
         console.log("iframe");
         parent = videoElement.parentNode;
     }
-
+    else if (videoElement.getAttribute('class') === 'rsContent') { // slider
+        console.log("royal slider");
+        parent = videoElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+    }
     else {
+        // regular player
         parent = videoElement.parentNode.parentNode;
 
+        // overlayed player
         if (stringStartsWith(location.href, "http://cinema.arte")   // Arte Cinema
-            || (parent.getAttribute('id') === "embed_widget"))        // Arte Future embedded
+            || (parent.getAttribute('id') === "embed_widget"))        // Arte media embedded
         {
             // Get parent to avoid being overlayed
             parent = parent.parentNode;
