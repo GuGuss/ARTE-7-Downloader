@@ -14,7 +14,9 @@
     - Arte live: http://www.arte.tv/guide/fr/direct
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611
-    - Arte info royale slider: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
+    - Arte info royale slider:
+        > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
+        > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
     - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
@@ -284,12 +286,12 @@ function createButtons(videoElement, videoElementIndex) {
 
     // Look for the parent to attach to
     if (videoElement.nodeName === "IFRAME") { // iframe
-        console.log("iframe");
+        console.log("> Detected iframe");
         parent = videoElement.parentNode;
     }
-    else if (videoElement.getAttribute('class') === 'rsContent') { // slider
-        console.log("royal slider");
-        parent = videoElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+    else if (videoElement.getAttribute('class') === 'rsContent') { // royal slider
+        console.log("> Detected royal slider");
+        parent = videoElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
     }
     else {
         // regular player
