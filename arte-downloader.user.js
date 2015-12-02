@@ -80,6 +80,7 @@ var languages = {
     'VOA': 'Original in german',
     'VOF-STF': 'Original in french subtitled',
     'VOF-STA': 'Original in french subtitled in german',
+    'VOF-STE[ANG]': 'Original in french subtitled in english',
     'VF': 'French dubbed',
     'VA': 'German dubbed',
     'VOA-STA': 'Original in german subtitled',
