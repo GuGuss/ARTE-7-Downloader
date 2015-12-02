@@ -309,7 +309,7 @@ function createButtons(videoElement, videoElementIndex) {
     var container = document.createElement('div');
     parent.appendChild(container);
     container.setAttribute('id', 'ArteDownloader-v' + GM_info.script.version)
-    container.setAttribute('style', 'display: table; width: 100%');
+    container.setAttribute('style', 'display: table; width: 100%; background-color: rgb(230, 230, 230);');
 
     // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
