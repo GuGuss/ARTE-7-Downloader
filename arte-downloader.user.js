@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3.1
+// @version     2.3.4
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -14,15 +14,24 @@
     - Arte live: http://www.arte.tv/guide/fr/direct
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611
+    - Arte info royale slider:
+        > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
+        > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+    - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+    - Arte cinema: http://cinema.arte.tv/fr/program/jude
+    - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
 
     @TODO
-    - 360°: http://future.arte.tv/fr/5-metres
-    - Arte cinema overlay: http://cinema.arte.tv/fr/program/jude
+    - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
+    - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
+    - 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
+        > player.html
+        > scenes/scene1.xml
+        > videourl="../video/video.mp4"
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
-    - Arte future tiles: http://future.arte.tv/fr/polar-sea-360deg-les-episodes
 */
 
 // Set this to 1 to enable console logs.
@@ -49,7 +58,8 @@ var videoPlayer = {
     '+7': 'arte_vp_url',
     'live': 'arte_vp_live-url',
     'generic': 'data-url',
-    'teaser': 'data-teaser-url'
+    'teaser': 'data-teaser-url',
+    'container': 'media_embed'
 };
 
 var qualityCode = {
@@ -70,6 +80,7 @@ var languages = {
     'VOA': 'Original in german',
     'VOF-STF': 'Original in french subtitled',
     'VOF-STA': 'Original in french subtitled in german',
+    'VOF-STE[ANG]': 'Original in french subtitled in english',
     'VF': 'French dubbed',
     'VA': 'German dubbed',
     'VOA-STA': 'Original in german subtitled',
@@ -154,7 +165,7 @@ function createButtonDownload(videoElementIndex, language, quality) {
 
     // Check RTMP stream
     if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
-        button.innerHTML = "<strong>Open this <a href='https://en.wikipedia.org/wiki/Real_Time_Messaging_Protocol'>RTMP</a> stream link into <a href='https://www.videolan.org/vlc/'>VLC</a>. Save it with CTRL+R > network</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
@@ -265,14 +276,43 @@ function createQualityComboBox(videoElementIndex) {
     return qualityComboBox;
 }
 
+function stringStartsWith(string, prefix) {
+    return string.slice(0, prefix.length) == prefix;
+}
+
 function createButtons(videoElement, videoElementIndex) {
-    console.log("\n");
+    console.log("> Adding buttons");
+
+    var parent;
+
+    // Look for the parent to attach to
+    if (videoElement.nodeName === "IFRAME") { // iframe
+        console.log("> Detected iframe");
+        parent = videoElement.parentNode;
+    }
+    else if (videoElement.getAttribute('class') === 'rsContent') { // royal slider
+        console.log("> Detected royal slider");
+        parent = videoElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+    }
+    else {
+        // regular player
+        parent = videoElement.parentNode.parentNode;
+
+        // overlayed player
+        if (stringStartsWith(location.href, "http://cinema.arte")   // Arte Cinema
+            || (parent.getAttribute('id') === "embed_widget"))        // Arte media embedded
+        {
+            // Get parent to avoid being overlayed
+            parent = parent.parentNode;
+        }
+    }
 
     // container
-    var parent = videoElement.parentNode.parentNode;
+    // Append a <div> to the player
     var container = document.createElement('div');
     parent.appendChild(container);
-    container.setAttribute('style', 'display: table; width: 100%');
+    container.setAttribute('id', 'ArteDownloader-v' + GM_info.script.version)
+    container.setAttribute('style', 'display: table; width: 100%; background-color: rgb(230, 230, 230);');
 
     // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
@@ -325,53 +365,6 @@ function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
     });
 }
 
-// Decorates a video with download buttons by parsing the player JSON
-function decorateVideo(videoElement, videoElementIndex) {
-
-    // Get player URL
-    var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
-
-    // If no URL found, try livestream tag
-    if (playerUrl === null) {
-        playerUrl = videoElement.getAttribute(videoPlayer['live']);
-
-        // Generic tag
-        if (playerUrl === null) {
-            playerUrl = videoElement.getAttribute(videoPlayer['generic']);
-            if (playerUrl === null) {
-                playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
-            }
-        }
-    }
-
-    // Check if player URL points to a JSON
-    if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    } else {
-
-        // Find the player JSON in the URL
-        GM_xmlhttpRequest(
-            {
-                method: "GET",
-                url: playerUrl,
-                onload: function (response) {
-
-                    // Look for player URL inside the livestream player URL
-                    var json = JSON.parse(response.responseText);
-                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
-
-                    // not found ? Look for playlist file inside the livestream player
-                    if (playerUrl === undefined) {
-                        console.log("Video player URL not available. Fetching livestream player URL");
-                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
-                    }
-                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-                    s
-                }
-            }
-        );
-    }
-};
 
 function getVideoName(videoElementIndex, quality) {
     var name;
@@ -442,6 +435,65 @@ function getVideoUrl(videoElementIndex, quality, language) {
     return null;
 }
 
+// Decorates a video with download buttons by parsing the player JSON
+function decorateVideo(videoElement, videoElementIndex) {
+
+    // Get player URL
+    var playerUrl = videoElement.getAttribute(videoPlayer['+7']);
+
+    // If no URL found, try livestream tag
+    if (playerUrl === null) {
+        playerUrl = videoElement.getAttribute(videoPlayer['live']);
+
+        // Generic tag
+        if (playerUrl === null) {
+            playerUrl = videoElement.getAttribute(videoPlayer['generic']);
+
+            // Teaser tag
+            if (playerUrl === null) {
+                playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
+            }
+        }
+    }
+
+    // iframe embedded media
+    if (playerUrl === null) {
+        playerUrl = unescape(videoElement.getAttribute('src'));
+        playerUrl = playerUrl.split('json_url=')[1];
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+    }
+
+        // Check if player URL points to a JSON
+    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+    } else {
+
+        // Find the player JSON in the URL
+        GM_xmlhttpRequest(
+            {
+                method: "GET",
+                url: playerUrl,
+                onload: function (response) {
+
+                    // Look for player URL inside the livestream player URL
+                    var json = JSON.parse(response.responseText);
+                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
+
+                    // not found ? Look for playlist file inside the livestream player
+                    if (playerUrl === undefined) {
+                        console.log("Video player URL not available. Fetching livestream player URL");
+                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
+                    }
+                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+                    s
+                }
+            }
+        );
+    }
+};
+
+
+
 /*
  * main: script entry
  */
@@ -462,6 +514,10 @@ function main() {
             if (videoPlayerElements.length === 0) {
                 videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
 
+                // Check media_embed on Cinema: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+                if (videoPlayerElements.length === 0) {
+                    videoPlayerElements = document.querySelectorAll("div." + videoPlayer['container'] + " iframe");
+                }
             }
         }
     }
