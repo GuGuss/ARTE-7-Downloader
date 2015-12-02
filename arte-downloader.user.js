@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3.2
+// @version     2.4.0
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -19,9 +19,11 @@
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
+    - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
 
     @TODO
-    - arte concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
+    - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
+    - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
     - 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
         > player.html
         > scenes/scene1.xml
@@ -53,7 +55,8 @@ var videoPlayer = {
     '+7': 'arte_vp_url',
     'live': 'arte_vp_live-url',
     'generic': 'data-url',
-    'teaser': 'data-teaser-url'
+    'teaser': 'data-teaser-url',
+    'container': 'media_embed'
 };
 
 var qualityCode = {
@@ -274,21 +277,32 @@ function stringStartsWith(string, prefix) {
 }
 
 function createButtons(videoElement, videoElementIndex) {
-    console.log("\n");
+    console.log("> Adding buttons");
 
-    // container
-    var parent = videoElement.parentNode.parentNode;
+    var parent;
 
-    if (stringStartsWith(location.href, "http://cinema.arte")   // Arte Cinema
-        || (parent.getAttribute('id') === "embed_widget"))        // Arte Future embedded
-    {
-        // Get parent to avoid being overlayed
-        parent = parent.parentNode;
+    // Look for the parent to attach to
+    if (videoElement.nodeName === "IFRAME") {
+        console.log("iframe");
+        parent = videoElement.parentNode;
     }
 
+    else {
+        parent = videoElement.parentNode.parentNode;
+
+        if (stringStartsWith(location.href, "http://cinema.arte")   // Arte Cinema
+            || (parent.getAttribute('id') === "embed_widget"))        // Arte Future embedded
+        {
+            // Get parent to avoid being overlayed
+            parent = parent.parentNode;
+        }
+    }
+
+    // container
     // Append a <div> to the player
     var container = document.createElement('div');
     parent.appendChild(container);
+    container.setAttribute('id', 'ArteDownloader-v' + GM_info.script.version)
     container.setAttribute('style', 'display: table; width: 100%');
 
     // Create language combobox
@@ -425,14 +439,23 @@ function decorateVideo(videoElement, videoElementIndex) {
         // Generic tag
         if (playerUrl === null) {
             playerUrl = videoElement.getAttribute(videoPlayer['generic']);
+
+            // Teaser tag
             if (playerUrl === null) {
                 playerUrl = videoElement.getAttribute(videoPlayer['teaser']);
             }
         }
     }
 
-    // Check if player URL points to a JSON
-    if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
+    // iframe embedded media
+    if (playerUrl === null) {
+        playerUrl = unescape(videoElement.getAttribute('src'));
+        playerUrl = playerUrl.split('json_url=')[1];
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+    }
+
+        // Check if player URL points to a JSON
+    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     } else {
 
@@ -482,6 +505,10 @@ function main() {
             if (videoPlayerElements.length === 0) {
                 videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
 
+                // Check media_embed on Cinema: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+                if (videoPlayerElements.length === 0) {
+                    videoPlayerElements = document.querySelectorAll("div." + videoPlayer['container'] + " iframe");
+                }
             }
         }
     }
