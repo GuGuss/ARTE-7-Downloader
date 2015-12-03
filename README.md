@@ -13,47 +13,38 @@ DESCRIPTION
 
 This script works as a browser extension to download any video on [ARTE website](http://www.arte.tv/).
 
-![](sample.png)
-
-INSTALL - GOOGLE CHROME
------------------------
-
-* Download the [arte-downloader.user.js](../../raw/master/arte-downloader.user.js) file on your computer.
-
-* Simply drag and drop the ``arte-downloader.user.js`` file on [__chrome://extensions__](chrome://extensions).
-
-
-**Note**: Update by redoing those steps.
-
-INSTALL - FIREFOX & OTHER
--------------------------
-
-* Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon.
-
-* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): Greasemonkey should open a dialog window to allow the script installation. Click *Install* and you're all set!
-
-
-USAGE
------
-
 Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons under a video:
 
 * **Select** the language version.
 * **Select** the quality.
 * **Download** either the video, or its description.
 
-In case of a livestream/direct, there are 2 options :
-* Download the MP4 video
-* Copy/paste the streaming link into [VLC](http://www.videolan.org/vlc/) and dump it to your drive with its convert tool (CTRL+R).
+In case of a livestream, there are 2 possibilities:
+* Download directly the MP4 video.
+* Open [VLC](http://www.videolan.org/vlc/) > Open its convert tool (CTRL+R) > Network tab > Copy the link > Convert/Save the video.
+
+![](http://i.imgur.com/GjvVHLv.jpg)
+
+INSTALLATION
+------------
+### Step 1 : Install a script manager
+* [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon.
+* [Chrome users] Install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) addon.
+* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) addon.
+
+### Step 2 : Install the script
+* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install* and you're all set!
+
+**Note** To get the latest version: redo step 2.
 
 TEST PAGES
 ------- 
-- Arte live: http://www.arte.tv/guide/fr/direct
-- Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
-- Arte info: http://info.arte.tv/fr/videos?id=71611
-- Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
-- Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-- Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+- ARTE live: http://www.arte.tv/guide/fr/direct
+- ARTE +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
+- ARTE info: http://info.arte.tv/fr/videos?id=71611
+- ARTE future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+- ARTE creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+- ARTE concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
 
 FAQ
 ---
@@ -62,9 +53,13 @@ FAQ
 
 If you often travel with poor Internet connections, now you can download videos to watch them later.
 
-**Why ARTE ?**
+**Why www.ARTE.tv ?**
 
-ARTE channel is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
+ARTE is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
+
+About ARTE: http://www.arte.tv/sites/en/arte-europe/about/
+
+TV Broadcast: http://reception.arte.tv/
 
 
 DISCLAIMER
