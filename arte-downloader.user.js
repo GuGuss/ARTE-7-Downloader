@@ -356,7 +356,7 @@ function createButtons(videoElement, videoElementIndex) {
     var container = document.createElement('div');
     parent.appendChild(container);
     container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
-    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px; display: table; width: 100%;');
+    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding-top: 10px; padding-left: 10px; display: table; width: 100%;');
 
     // Create index indicator if Royal Slider
     if (bRoyalSlider === true) {
@@ -401,7 +401,7 @@ function createButtons(videoElement, videoElementIndex) {
     // Create credits element if not RoyalSlider or if last player from RoyalSlider
     if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch: 
         var credits = document.createElement('div');
-        credits.setAttribute('style', 'width: 100%; text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 3px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+        credits.setAttribute('style', 'width: 100%; text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
         credits.innerHTML = 'Arte Downloader v.' + GM_info.script.version
                         + ' built by and for the community with love'
                         + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
