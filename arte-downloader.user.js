@@ -213,6 +213,10 @@ function createButtonMetadata(videoElementIndex) {
     if (description_short === undefined) {
         return null;
     }
+    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
+    if (subtitle === undefined) {
+        return null;
+    }
     var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
     if (title === undefined) {
         return null;
@@ -221,7 +225,7 @@ function createButtonMetadata(videoElementIndex) {
     if (title === undefined) {
         return null;
     }
-    var metadata = "[Title]\n" + title + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
+    var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
 
     // Properly encode to Base 64.
     var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
