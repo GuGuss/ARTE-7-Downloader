@@ -1,7 +1,7 @@
 ARTE-Downloader
 =================
 
-Current version: **2.3.5**.
+Current version: **2.3.6**.
 
 CONTRIBUTORS
 -----------
@@ -15,9 +15,9 @@ This script works as a browser extension to download any video on [ARTE website]
 
 Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons under a video:
 
-* **Select** the language version.
-* **Select** the quality.
-* **Download** either the video, or its description.
+* **Select** the language version: french, german, english, spanish.
+* **Select** the quality (from 216p up to 720p).
+* **Download** the video or its description.
 
 In case of a livestream, there are 2 possibilities:
 * Download directly the MP4 video.
