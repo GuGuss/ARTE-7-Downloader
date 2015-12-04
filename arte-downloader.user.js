@@ -145,31 +145,28 @@ function preParsePlayerJson(videoElementIndex) {
     }
 }
 
-function createButtonDownload(videoElementIndex, language, quality) {
+function createButtonDownload(videoElementIndex, language) {
     var button = document.createElement('a');
     var videoUrl;
+
     for (q in qualityCode) {
         videoUrl = getVideoUrl(videoElementIndex, qualityCode[q], language);
-        if (videoUrl !== null) {
+        if (videoUrl !== '') {
             quality = q;
             break;
         }
     }
 
-    // Failed to find any video feed
-    if (videoUrl === null) {
-        console.log("Could not find video feed");
-        return null;
-    }
-
     // Check if video exists
     if (videoUrl === null) {
+        console.log("Could not find video feed");
+
         // Don't create button
         return null;
     }
 
     // Check RTMP stream
-    if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // because ends with .mp4 like HTTP
+    if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // check first because it ends with .mp4 like HTTP
         button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
@@ -180,7 +177,7 @@ function createButtonDownload(videoElementIndex, language, quality) {
 
         // Check HLS stream : should not happen
     else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
-        button.innerHTML = quality + "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> HLS master stream</a> (copy/paste into Apple Quicktime or <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> HLS master stream</a> (copy/paste into Apple Quicktime or <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Unknown URL format : should not happen
@@ -379,15 +376,9 @@ function createButtons(videoElement, videoElementIndex) {
     // Create quality combobox
     var qualityComboBox = createQualityComboBox(videoElementIndex)
     container.appendChild(qualityComboBox);
-    var selectedQuality;
-
-    // Check if there are quality available to select
-    if (qualityComboBox.options.length > 0) {
-        selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
-    }
 
     // Create download button
-    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage, selectedQuality)
+    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage)
     if (btnDownload !== null) {
         container.appendChild(btnDownload);
     }
