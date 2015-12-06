@@ -271,7 +271,7 @@ function createLanguageComboBox(videoElementIndex) {
 
     // Keeping uniform style
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', 'color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    languageComboBox.setAttribute('style', 'padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return languageComboBox;
 }
@@ -302,7 +302,7 @@ function createQualityComboBox(videoElementIndex) {
 
     // Keeping uniform style
     qualityComboBox.setAttribute('class', 'btn btn-default');
-    qualityComboBox.setAttribute('style', 'margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    qualityComboBox.setAttribute('style', 'padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return qualityComboBox;
 }
