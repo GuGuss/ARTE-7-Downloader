@@ -10,7 +10,8 @@
 // ==/UserScript==
 
 /*
-    Works for: 
+    Arte-Downloader decorates videos from : 
+
     - Arte live: http://www.arte.tv/guide/fr/direct
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611    
@@ -25,9 +26,11 @@
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
     - Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
+    - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
+
+
 
     @TODO
-    - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
@@ -314,6 +317,17 @@ function stringStartsWith(string, prefix) {
     return string.slice(0, prefix.length) == prefix;
 }
 
+// Get a parent node of the chosen type and class
+// NB: yes this is discriminatory.
+function getParent(node, nodeName, classString) {
+    var parent = node;
+    console.log("> Looking for a <" + nodeName + " class='" + classString + "'> parent node")
+    while (parent.nodeName !== nodeName.toUpperCase() || parent.getAttribute('class') !== classString) {
+        parent = parent.parentNode;
+    }
+    return parent;
+}
+
 function createButtons(videoElement, videoElementIndex) {
     var parent;
     var bRoyalSlider = false;
@@ -324,6 +338,11 @@ function createButtons(videoElement, videoElementIndex) {
     // iframe player
     if (videoElement.nodeName === "IFRAME") {
         console.log("> Decorating iFrame player");
+
+        // Arte Tracks
+        if (stringStartsWith(window.location.href, "http://tracks.arte.tv")) {
+            parent = getParent(parent, "section", "bonus");
+        }
     }
 
         // royal slider player

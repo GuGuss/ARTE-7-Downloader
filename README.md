@@ -39,12 +39,21 @@ INSTALLATION
 
 TEST PAGES
 ------- 
-- ARTE live: http://www.arte.tv/guide/fr/direct
-- ARTE +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
-- ARTE info: http://info.arte.tv/fr/videos?id=71611
-- ARTE future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
-- ARTE creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-- ARTE concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+- Arte live: http://www.arte.tv/guide/fr/direct
+- Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
+- Arte info: http://info.arte.tv/fr/videos?id=71611    
+- Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
+- Arte info royal slider:
+    > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
+    > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
+- Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
+- Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
+- Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
+- Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+- Arte cinema: http://cinema.arte.tv/fr/program/jude
+- Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+- Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
+- Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
 
 FAQ
 ---
