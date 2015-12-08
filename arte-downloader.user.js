@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3.6
+// @version     2.3.7
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -13,7 +13,8 @@
     Works for: 
     - Arte live: http://www.arte.tv/guide/fr/direct
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
-    - Arte info: http://info.arte.tv/fr/videos?id=71611
+    - Arte info: http://info.arte.tv/fr/videos?id=71611    
+    - Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
     - Arte info royale slider:
         > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
         > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
@@ -25,7 +26,6 @@
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
 
     @TODO
-    - Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#areva-uramin
     - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
     - 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
@@ -34,6 +34,8 @@
         > videourl="../video/video.mp4"
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
+
+
 
 // Set this to 1 to enable console logs.
 var debug_mode = 1;
@@ -56,12 +58,13 @@ var nbHLS;
 var availableLanguages;
 var players = []; // players.push({});
 
-var videoPlayer = {
-    '+7': 'arte_vp_url',
+var videoPlayerClass = {
     'live': 'arte_vp_live-url',
+    '+7': 'arte_vp_url',
     'generic': 'data-url',
     'teaser': 'data-teaser-url',
-    'container': 'media_embed'
+    'story': 'embed.embed--delay iframe',
+    'embedded': 'media_embed iframe' // eg: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
 };
 
 var qualityCode = {
@@ -193,7 +196,7 @@ function createButtonDownload(videoElementIndex, language) {
 
     // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return button;
 }
 
@@ -490,22 +493,22 @@ function getVideoUrl(videoElementIndex, quality, language) {
     return '';
 }
 
-// Decorates a video with download buttons by parsing the player JSON
 function decorateVideo(videoElement, videoElementIndex) {
 
     // Get player URL
     var playerUrl = null;
-    for (key in videoPlayer) {
-        playerUrl = videoElement.getAttribute(videoPlayer[key]);
+    for (key in videoPlayerClass) {
+        playerUrl = videoElement.getAttribute(videoPlayerClass[key]);
         if (playerUrl !== null) {
             break;
         }
     }
 
-    // iframe embedded media
+    // If iframe embedded media: Parse JSON
     if (playerUrl === null) {
         playerUrl = unescape(videoElement.getAttribute('src'));
         playerUrl = playerUrl.split('json_url=')[1];
+        playerUrl = playerUrl.split('&')[0];
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     }
 
@@ -513,7 +516,6 @@ function decorateVideo(videoElement, videoElementIndex) {
     else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     } else {
-
         // Find the player JSON in the URL
         GM_xmlhttpRequest(
             {
@@ -528,7 +530,7 @@ function decorateVideo(videoElement, videoElementIndex) {
                     // not found ? Look for playlist file inside the livestream player
                     if (playerUrl === undefined) {
                         console.log("Video player URL not available. Fetching livestream player URL");
-                        playerUrl = videoElement.getAttribute(videoPlayer['live']);
+                        playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
                     }
                     parsePlayerJson(playerUrl, videoElement, videoElementIndex);
                 }
@@ -545,25 +547,12 @@ function decorateVideo(videoElement, videoElementIndex) {
 main();
 
 function main() {
-    var videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['live'] + "]");
-
-    // Check if not a livestream
-    if (videoPlayerElements.length === 0) {
-        videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['+7'] + "]");
-
-        // Check Creative 
-        if (videoPlayerElements.length === 0) {
-            videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['generic'] + "]");
-
-            // Check info
-            if (videoPlayerElements.length === 0) {
-                videoPlayerElements = document.querySelectorAll("div[" + videoPlayer['teaser'] + "]");
-
-                // Check media_embed on Cinema: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
-                if (videoPlayerElements.length === 0) {
-                    videoPlayerElements = document.querySelectorAll("div." + videoPlayer['container'] + " iframe");
-                }
-            }
+    var videoPlayerElements;
+    for (tag in videoPlayerClass) {
+        videoPlayerElements = document.querySelectorAll("div." + videoPlayerClass[tag]);
+        if (videoPlayerElements.length > 0) {
+            console.log(tag);
+            break;
         }
     }
 
