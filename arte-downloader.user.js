@@ -62,7 +62,10 @@ var videoPlayerClass = {
     'live': 'arte_vp_live-url',
     '+7': 'arte_vp_url',
     'generic': 'data-url',
-    'teaser': 'data-teaser-url',
+    'teaser': 'data-teaser-url'
+};
+
+var videoPlayerClassEmbedded = {
     'story': 'embed.embed--delay iframe',
     'embedded': 'media_embed iframe' // eg: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
 };
@@ -79,20 +82,20 @@ var languages = {
     // 'versionCode'    : 'language'
     'VO': 'Original',
     'VO-STF': 'Original subtitled in french',
-    'VA-STA': 'German dubbed subtitled',
-    'VF-STF': 'French dubbed subtitled',
     'VOF': 'Original in french',
     'VOA': 'Original in german',
     'VOF-STF': 'Original in french subtitled',
     'VOF-STA': 'Original in french subtitled in german',
     'VOF-STE[ANG]': 'Original in french subtitled in english',
     'VOF-STE[ESP]': 'Original in french subtitled in spanish',
-    'VF': 'French dubbed',
-    'VA': 'German dubbed',
     'VOA-STA': 'Original in german subtitled',
     'VOA-STF': 'Original in german subtitled in french',
     'VOF-STMF': 'Original in french for hearing impaired',
     'VOA-STMA': 'Original in german for hearing impaired',
+    'VF': 'French dubbed',
+    'VA': 'German dubbed',
+    'VA-STA': 'German dubbed subtitled',
+    'VF-STF': 'French dubbed subtitled',
     'VF-STMF': 'French dubbed for hearing impaired',
     'VA-STMA': 'German dubbed for hearing impaired',
     'VFAUD': 'French with audio description',
@@ -548,11 +551,23 @@ main();
 
 function main() {
     var videoPlayerElements;
+
+    // Check regular tags
     for (tag in videoPlayerClass) {
-        videoPlayerElements = document.querySelectorAll("div." + videoPlayerClass[tag]);
+        videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
+
         if (videoPlayerElements.length > 0) {
-            console.log(tag);
             break;
+        }
+    }
+
+    // Check iframe tags
+    if (videoPlayerElements.length === 0) {
+        for (tag in videoPlayerClassEmbedded) {
+            videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
+            if (videoPlayerElements.length > 0) {
+                break;
+            }
         }
     }
 
