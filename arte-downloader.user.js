@@ -15,7 +15,7 @@
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
     - Arte info: http://info.arte.tv/fr/videos?id=71611    
     - Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
-    - Arte info royale slider:
+    - Arte info royal slider:
         > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
         > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
@@ -319,11 +319,11 @@ function createButtons(videoElement, videoElementIndex) {
     var bRoyalSlider = false;
 
     // Look for the parent to decorate
+    parent = videoElement.parentNode;
 
     // iframe player
     if (videoElement.nodeName === "IFRAME") {
         console.log("> Decorating iFrame player");
-        parent = videoElement.parentNode;
     }
 
         // royal slider player
@@ -331,36 +331,31 @@ function createButtons(videoElement, videoElementIndex) {
         console.log("> Decorating RoyalSlider player");
         bRoyalSlider = true;
 
-        if (videoElement.getAttribute('data-teaser-type') === "VideoTeaserView") {
-            parent = videoElement.parentNode;
-        } else {
-            // Get the parent with SliderTeaserView type
-            parent = videoElement.parentNode;
-            while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView") {
-                parent = parent.parentNode;
-            }
+        // Get the parent with SliderTeaserView type
+        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView") {
+            parent = parent.parentNode;
         }
     }
 
         // overlayed player for Arte Cinema or media embedded
     else if (stringStartsWith(location.href, "http://cinema.arte")
-        || (videoElement.parentNode.parentNode.getAttribute('id') === "embed_widget")) {
+        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
 
         console.log("> Decorating overlayed Cinema player");
-        parent = videoElement.parentNode.parentNode.parentNode;
+        parent = parent.parentNode.parentNode;
     }
 
         // regular player
     else {
         console.log("> Decorating player");
-        parent = videoElement.parentNode.parentNode;
+        parent = parent.parentNode;
     }
 
     // Append a <div> container to the player
     var container = document.createElement('div');
     parent.appendChild(container);
     container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
-    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding-top: 10px; padding-left: 10px; display: table; width: 100%;');
+    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
 
     // Create index indicator if Royal Slider
     if (bRoyalSlider === true) {
@@ -399,7 +394,7 @@ function createButtons(videoElement, videoElementIndex) {
     // Create credits element if not RoyalSlider or if last player from RoyalSlider
     if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch: 
         var credits = document.createElement('div');
-        credits.setAttribute('style', 'width: 100%; text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+        credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
         credits.innerHTML = 'Arte Downloader v.' + GM_info.script.version
                         + ' built by and for the community with love'
                         + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
