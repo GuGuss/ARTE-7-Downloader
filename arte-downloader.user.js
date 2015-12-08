@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.3.7
+// @version     2.4
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
@@ -24,14 +24,11 @@
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+    - Arte future 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
 
     @TODO
     - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
-    - 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
-        > player.html
-        > scenes/scene1.xml
-        > videourl="../video/video.mp4"
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
 
@@ -224,11 +221,11 @@ function createButtonMetadata(videoElementIndex) {
         return null;
     }
     var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    if (title === undefined) {
+    if (description === undefined) {
         return null;
     }
     var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
-    if (title === undefined) {
+    if (tags === undefined) {
         return null;
     }
     var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
@@ -507,38 +504,67 @@ function decorateVideo(videoElement, videoElementIndex) {
         }
     }
 
-    // If iframe embedded media: Parse JSON
+    // iframe embedded media
     if (playerUrl === null) {
-        playerUrl = unescape(videoElement.getAttribute('src'));
-        playerUrl = playerUrl.split('json_url=')[1];
-        playerUrl = playerUrl.split('&')[0];
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    }
 
-        // Check if player URL points to a JSON
-    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    } else {
-        // Find the player JSON in the URL
-        GM_xmlhttpRequest(
-            {
+        // Get src attribute
+        playerUrl = unescape(videoElement.getAttribute('src'));
+
+        // Get JSON URL
+        var jsonUrl = playerUrl.split('json_url=')[1];
+        if (jsonUrl !== undefined) {
+            parsePlayerJson(jsonUrl.split('&')[0], videoElement, videoElementIndex);
+        }
+        else {
+            // Find the 360 video in the URL
+            console.log("> Searching a 360 video");
+            GM_xmlhttpRequest({
                 method: "GET",
                 url: playerUrl,
                 onload: function (response) {
+                    var doc = response.responseText;
+                    var xml = doc.split('xml:"')[1].split('"')[0];
 
-                    // Look for player URL inside the livestream player URL
-                    var json = JSON.parse(response.responseText);
-                    playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
+                    // Get XML
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: playerUrl + xml,
+                        onload: function (response) {
+                            xml = response.responseText;
 
-                    // not found ? Look for playlist file inside the livestream player
-                    if (playerUrl === undefined) {
-                        console.log("Video player URL not available. Fetching livestream player URL");
-                        playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
-                    }
-                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+                            // Get video URL
+                            var video = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
+                            console.log(video);
+                        }
+                    });
                 }
+            });
+        }
+    }
+
+    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") { // Check if player URL points to a JSON
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
+    }
+
+    else {
+        // Find the player JSON in the URL
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: playerUrl,
+            onload: function (response) {
+
+                // Look for player URL inside the livestream player URL
+                var json = JSON.parse(response.responseText);
+                playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
+
+                // not found ? Look for playlist file inside the livestream player
+                if (playerUrl === undefined) {
+                    console.log("Video player URL not available. Fetching livestream player URL");
+                    playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
+                }
+                parsePlayerJson(playerUrl, videoElement, videoElementIndex);
             }
-        );
+        });
     }
 };
 
@@ -555,7 +581,6 @@ function main() {
     // Check regular tags
     for (tag in videoPlayerClass) {
         videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
-
         if (videoPlayerElements.length > 0) {
             break;
         }
@@ -569,6 +594,11 @@ function main() {
                 break;
             }
         }
+    }
+
+    // Check 360 (no tags yet)
+    if (videoPlayerElements.length === 0) {
+        videoPlayerElements = document.querySelectorAll("iframe");
     }
 
     nbVideoPlayers = videoPlayerElements.length;
