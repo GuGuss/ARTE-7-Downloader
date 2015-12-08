@@ -24,7 +24,7 @@
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
-    - Arte future 360: http://future.arte.tv/fr/5-metres (powered by http://deep-inc.com/)
+    - Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
 
     @TODO
     - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
@@ -493,6 +493,10 @@ function getVideoUrl(videoElementIndex, quality, language) {
     return '';
 }
 
+function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
 function decorateVideo(videoElement, videoElementIndex) {
 
     // Get player URL
@@ -533,8 +537,24 @@ function decorateVideo(videoElement, videoElementIndex) {
                             xml = response.responseText;
 
                             // Get video URL
-                            var video = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
-                            console.log(video);
+                            var videoName = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
+                            var videoUrl = playerUrl + videoName;
+                            console.log(videoUrl);
+
+                            // Decorate
+                            var container = document.createElement('div');
+                            insertAfter(container, videoElement);
+                            container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
+                            container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
+                            var button = document.createElement('a');
+                            button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+                            button.setAttribute('id', 'btnArteDownloader');
+                            button.setAttribute('href', videoUrl);
+                            button.setAttribute('target', '_blank');
+                            button.setAttribute('download', videoName);
+                            button.setAttribute('class', 'btn btn-default');
+                            button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+                            container.appendChild(button);
                         }
                     });
                 }
