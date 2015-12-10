@@ -6,7 +6,7 @@
 // @version     2.4
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
-// @icon        https://icons.duckduckgo.com/ip2/www.arte.tv.ico
+// @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
 
 /*
@@ -26,17 +26,18 @@
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
     - Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
-    - Arte Tracks: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
+    - Arte Tracks: http://tracks.arte.tv/fr/nicolas-winding-refn-soyez-sympas-rembobinez
+    - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
 
 
-
+    
     @TODO
     - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
 
 
-
+/* --- GLOBAL VARIABLES --- */
 // Set this to 1 to enable console logs.
 var debug_mode = 1;
 if (!debug_mode) {
@@ -67,7 +68,7 @@ var videoPlayerClass = {
 
 var videoPlayerClassEmbedded = {
     'story': 'embed.embed--delay iframe',
-    'embedded': 'media_embed iframe' // eg: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+    'embedded': 'media_embed iframe'
 };
 
 var qualityCode = {
@@ -102,6 +103,55 @@ var languages = {
     'VAAUD': 'German with audio description'
 };
 
+
+
+/* --- FUNCTIONS: utilities --- */
+function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
+function stringStartsWith(string, prefix) {
+    return string.slice(0, prefix.length) == prefix;
+}
+
+function hasClass(element, cls) {
+    return (' ' + element.className + ' ').indexOf(' ' + cls + ' ') > -1;
+}
+
+// Get a parent node of the chosen type and class
+// NB: yes this is discriminatory.
+function getParent(node, nodeName, classString) {
+    var parent = node;
+    var nbNodeIteration = 0;
+    var nbNodeIterationMax = 10;
+
+    // any node
+    if (nodeName === '') {
+        console.log("> Looking for a parent node with class '" + classString + "'");
+        while (parent.nodeName !== "BODY"
+                && nbNodeIteration < nbNodeIterationMax
+                && hasClass(parent, classString) === false) {
+            nbNodeIteration++;
+            parent = parent.parentNode;
+        }
+    }
+
+        // with defined node type
+    else {
+        console.log("> Looking for a <" + nodeName + " class='" + classString + "'> parent node");
+        while (parent.nodeName !== "BODY"
+                && nbNodeIteration < nbNodeIterationMax
+                && (parent.nodeName !== nodeName.toUpperCase() || hasClass(parent, classString) === false)) {
+            nbNodeIteration++;
+            parent = parent.parentNode;
+        }
+    }
+    return parent;
+}
+
+
+
+/* --- FUNCTIONS: decorating --- */
 function addLanguage(videoElementIndex, language) {
     if (availableLanguages[videoElementIndex][language] === 0) {
         availableLanguages[videoElementIndex][language] = languages[language];
@@ -313,24 +363,10 @@ function createQualityComboBox(videoElementIndex) {
     return qualityComboBox;
 }
 
-function stringStartsWith(string, prefix) {
-    return string.slice(0, prefix.length) == prefix;
-}
-
-// Get a parent node of the chosen type and class
-// NB: yes this is discriminatory.
-function getParent(node, nodeName, classString) {
-    var parent = node;
-    console.log("> Looking for a <" + nodeName + " class='" + classString + "'> parent node")
-    while (parent.nodeName !== nodeName.toUpperCase() || parent.getAttribute('class') !== classString) {
-        parent = parent.parentNode;
-    }
-    return parent;
-}
-
-function createButtons(videoElement, videoElementIndex) {
+function decoratePlayer(videoElement, videoElementIndex) {
     var parent;
     var bRoyalSlider = false;
+    var container = document.createElement('div');
 
     // Look for the parent to decorate
     parent = videoElement.parentNode;
@@ -341,8 +377,9 @@ function createButtons(videoElement, videoElementIndex) {
 
         // Arte Tracks
         if (stringStartsWith(window.location.href, "http://tracks.arte.tv")) {
-            parent = getParent(parent, "section", "bonus");
+            parent = getParent(videoElement, '', "video");
         }
+        insertAfter(container, parent);
     }
 
         // royal slider player
@@ -354,6 +391,7 @@ function createButtons(videoElement, videoElementIndex) {
         while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView") {
             parent = parent.parentNode;
         }
+        parent.appendChild(container);
     }
 
         // overlayed player for Arte Cinema or media embedded
@@ -362,17 +400,16 @@ function createButtons(videoElement, videoElementIndex) {
 
         console.log("> Decorating overlayed Cinema player");
         parent = parent.parentNode.parentNode;
+        parent.appendChild(container);
     }
 
         // regular player
     else {
         console.log("> Decorating player");
         parent = parent.parentNode;
+        parent.appendChild(container);
     }
 
-    // Append a <div> container to the player
-    var container = document.createElement('div');
-    parent.appendChild(container);
     container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
 
@@ -430,7 +467,7 @@ function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
         onload: function (response) {
             playerJson[videoElementIndex] = JSON.parse(response.responseText);
             preParsePlayerJson(videoElementIndex);
-            createButtons(videoElement, videoElementIndex);
+            decoratePlayer(videoElement, videoElementIndex);
         }
     });
 }
@@ -507,11 +544,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
     return '';
 }
 
-function insertAfter(newNode, referenceNode) {
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-}
-
-function decorateVideo(videoElement, videoElementIndex) {
+function analysePlayer(videoElement, videoElementIndex) {
 
     // Get player URL
     var playerUrl = null;
@@ -535,7 +568,7 @@ function decorateVideo(videoElement, videoElementIndex) {
         }
         else {
             // Find the 360 video in the URL
-            console.log("> Searching a 360 video");
+            console.log("> Searching a 360 video for " + playerUrl);
             GM_xmlhttpRequest({
                 method: "GET",
                 url: playerUrl,
@@ -604,9 +637,7 @@ function decorateVideo(videoElement, videoElementIndex) {
 
 
 
-/*
- * main: script entry
- */
+/* --- MAIN SCRIPT ENTRY --- */
 main();
 
 function main() {
@@ -661,8 +692,8 @@ function main() {
         }
     }
 
-    // Inject buttons in the video's face
+    // Analyse each video player
     for (var i = 0; i < nbVideoPlayers; i++) {
-        decorateVideo(videoPlayerElements[i], i);
+        analysePlayer(videoPlayerElements[i], i);
     }
 }
