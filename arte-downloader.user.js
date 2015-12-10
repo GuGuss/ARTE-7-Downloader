@@ -23,16 +23,14 @@
     - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
     - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+    - Arte Concert Tape: http://concert.arte.tv/fr/tape-etienne-daho
     - Arte cinema: http://cinema.arte.tv/fr/program/jude
     - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
     - Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
     - Arte Tracks: http://tracks.arte.tv/fr/nicolas-winding-refn-soyez-sympas-rembobinez
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
-
-
     
     @TODO
-    - Arte Concert tape stop loading : http://concert.arte.tv/fr/tape-etienne-daho
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
 */
 
@@ -120,7 +118,7 @@ function hasClass(element, cls) {
 
 // Get a parent node of the chosen type and class
 // NB: yes this is discriminatory.
-function getParent(node, nodeName, classString) {
+function getParent(nodeReference, nodeName, classString) {
     var parent = node;
     var nbNodeIteration = 0;
     var nbNodeIterationMax = 10;
@@ -376,7 +374,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
         console.log("> Decorating iFrame player");
 
         // Arte Tracks
-        if (stringStartsWith(window.location.href, "http://tracks.arte.tv")) {
+        if (stringStartsWith(window.location.href, "http://tracks.arte")) {
             parent = getParent(videoElement, '', "video");
         }
         insertAfter(container, parent);
@@ -406,8 +404,13 @@ function decoratePlayer(videoElement, videoElementIndex) {
         // regular player
     else {
         console.log("> Decorating player");
-        parent = parent.parentNode;
-        parent.appendChild(container);
+        if (stringStartsWith(location.href, "http://concert.arte")) {
+            var playerSection = document.querySelector('section#section-player');
+            insertAfter(container, playerSection);
+        } else {
+            parent = parent.parentNode;
+            parent.appendChild(container);
+        }
     }
 
     container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
