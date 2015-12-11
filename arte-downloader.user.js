@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4
+// @version     2.4.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico
@@ -13,25 +13,35 @@
     Arte-Downloader decorates videos from : 
 
     - Arte live: http://www.arte.tv/guide/fr/direct
+
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
+
     - Arte info: http://info.arte.tv/fr/videos?id=71611    
+
     - Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
     - Arte info royal slider:
         > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
-        > #2: http://info.arte.tv/fr/interview-de-jerome-fritel
+        > #2: http://info.arte.tv/fr/interview-de-jerome-fritel        
+    - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
+    - Arte Info Touslesinternets: http://touslesinternets.arte.tv/inakba-la-seconde-vie-des-villages-palestiniens-disparus/
+
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
-    - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes
+    - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes    
+    - Arte Future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
+
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-    - Arte concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
+
+    - Arte Concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte Concert Tape: http://concert.arte.tv/fr/tape-etienne-daho
-    - Arte cinema: http://cinema.arte.tv/fr/program/jude
-    - Arte cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
-    - Arte future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
+
+    - Arte Cinema: http://cinema.arte.tv/fr/program/jude
+    - Arte Cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
+
     - Arte Tracks: http://tracks.arte.tv/fr/nicolas-winding-refn-soyez-sympas-rembobinez
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     
     @TODO
-    - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
+    - ... ?
 */
 
 
@@ -373,11 +383,18 @@ function decoratePlayer(videoElement, videoElementIndex) {
     if (videoElement.nodeName === "IFRAME") {
         console.log("> Decorating iFrame player");
 
-        // Arte Tracks
-        if (stringStartsWith(window.location.href, "http://tracks.arte")) {
-            parent = getParent(videoElement, '', "video");
+        // Arte touslesinternets
+        if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
+            parent.insertBefore(container, videoElement);
         }
-        insertAfter(container, parent);
+
+        else {
+            // Arte Tracks
+            if (stringStartsWith(window.location.href, "http://tracks.arte")) {
+                parent = getParent(videoElement, '', "video");
+            }
+            insertAfter(container, parent);
+        }
     }
 
         // royal slider player
@@ -567,7 +584,7 @@ function analysePlayer(videoElement, videoElementIndex) {
         // Get JSON URL
         var jsonUrl = playerUrl.split('json_url=')[1];
         if (jsonUrl !== undefined) {
-            parsePlayerJson(jsonUrl.split('&')[0], videoElement, videoElementIndex);
+            parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
         }
         else {
             // Find the 360 video in the URL
@@ -654,7 +671,7 @@ function main() {
         }
     }
 
-    // Check iframe tags
+    // Check embedded tags
     if (videoPlayerElements.length === 0) {
         for (tag in videoPlayerClassEmbedded) {
             videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
@@ -664,9 +681,14 @@ function main() {
         }
     }
 
-    // Check 360 (no tags yet)
+    // Check iframe
     if (videoPlayerElements.length === 0) {
-        videoPlayerElements = document.querySelectorAll("iframe");
+        videoPlayerElements = document.querySelectorAll("iframe[arte-video]");
+
+        // Check 360 (no tags yet)
+        if (videoPlayerElements.length === 0) {
+            videoPlayerElements = document.querySelectorAll("iframe");
+        }
     }
 
     nbVideoPlayers = videoPlayerElements.length;
