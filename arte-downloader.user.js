@@ -381,15 +381,15 @@ function decoratePlayer(videoElement, videoElementIndex) {
     }
 
         // royal slider player
-    else if (videoElement.getAttribute('class') === 'rsContent') {
+    else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
         console.log("> Decorating RoyalSlider player");
         bRoyalSlider = true;
 
         // Get the parent with SliderTeaserView type
-        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView") {
+        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView" && parent.getAttribute('class') !== 'dnd-drop-wrapper') {
             parent = parent.parentNode;
         }
-        parent.appendChild(container);
+        insertAfter(container, parent);
     }
 
         // overlayed player for Arte Cinema or media embedded
@@ -403,7 +403,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
 
         // regular player
     else {
-        console.log("> Decorating player");
+        console.log("> Decorating regular player");
         if (stringStartsWith(location.href, "http://concert.arte")) {
             var playerSection = document.querySelector('section#section-player');
             insertAfter(container, playerSection);
