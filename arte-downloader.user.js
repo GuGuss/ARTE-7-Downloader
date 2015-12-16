@@ -6,6 +6,8 @@
 // @version     2.4.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
+// @grant       GM_setValue
+// @grant       GM_getValue
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
 
@@ -55,6 +57,11 @@ if (!debug_mode) {
 else {
     console.log('GM debug mode enabled');
 }
+
+// counter for script runs
+var counter = GM_getValue('counter', 0);
+console.log(GM_info.script.name + ' has been run ' + counter + ' times.');
+GM_setValue('counter', ++counter);
 
 // TODO: struct array instead of this garbage
 // eg.: player[i].nbHTTP
