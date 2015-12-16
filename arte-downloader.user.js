@@ -43,7 +43,9 @@
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     
     @TODO
-    - ... ?
+    - Arte cinema magazine: http://cinema.arte.tv/fr/magazine/blow-up
+    - Arte cinema: http://cinema.arte.tv/fr
+    - Arte creative: http://creative.arte.tv/fr/starwars-retourenforce
 */
 
 
