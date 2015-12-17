@@ -6,7 +6,7 @@ Current version: **2.4.1**.
 CONTRIBUTORS
 -----------
 
-Bumbadawg, GuGuss, aug-riedinger, maxlath, uahim
+@Bumbadawg, @GuGuss, @aug-riedinger, @maxlath, @uahim
 
 DESCRIPTION
 -----------
