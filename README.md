@@ -6,7 +6,7 @@ Current version: **2.4.1**.
 CONTRIBUTORS
 -----------
 
-@Bumbadawg, @GuGuss, @aug-riedinger, @maxlath, @uahim
+[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), @aug-riedinger, @maxlath, @uahim
 
 DESCRIPTION
 -----------
@@ -29,13 +29,15 @@ INSTALLATION
 ------------
 ### Step 1 : Install a script manager
 * [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon.
-* [Chrome users] Install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) addon.
-* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) addon.
+* [Chrome users] :
+ - Either install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) script manager.
+ - Or drag and drop the following script onto the page [chrome://extensions/](chrome://extensions/)
+* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) script manager.
 
 ### Step 2 : Install the script
 * Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install* and you're all set!
 
-**Note** To get the latest version: redo step 2.
+**Note** To get the latest version: either update through your script manager, or redo step 2 ;-)
 
 FAQ
 ---
