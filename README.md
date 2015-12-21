@@ -31,7 +31,7 @@ INSTALLATION
 * [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) addon.
 * [Chrome users] :
  - Either install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) script manager.
- - Or drag and drop the following script onto the page [chrome://extensions/](chrome://extensions/)
+ - Or download then drag and drop the following script onto the page [chrome://extensions/](chrome://extensions/)
 * [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) script manager.
 
 ### Step 2 : Install the script
