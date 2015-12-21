@@ -50,6 +50,15 @@
 
 
 /* --- GLOBAL VARIABLES --- */
+//var scriptVersion = GM_info !== undefined || GM_info !== null ? GM_info.script.version : "2.4";
+var scriptVersion = "2.4.1";
+
+// counter for script runs
+//var counter = GM_getValue('counter', 0);
+//console.log(GM_info.script.name + ' has been run ' + counter + ' times.');
+//GM_setValue('counter', ++counter);
+
+
 // Set this to 1 to enable console logs.
 var debug_mode = 1;
 if (!debug_mode) {
@@ -59,11 +68,6 @@ if (!debug_mode) {
 else {
     console.log('GM debug mode enabled');
 }
-
-// counter for script runs
-var counter = GM_getValue('counter', 0);
-console.log(GM_info.script.name + ' has been run ' + counter + ' times.');
-GM_setValue('counter', ++counter);
 
 // TODO: struct array instead of this garbage
 // eg.: player[i].nbHTTP
@@ -380,6 +384,15 @@ function createQualityComboBox(videoElementIndex) {
     return qualityComboBox;
 }
 
+function createCreditsElement() {
+    var credits = document.createElement('div');
+    credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+    credits.innerHTML = 'Arte Downloader v.' + scriptVersion
+                    + ' built by and for the community with love'
+                    + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+    return credits;
+}
+
 function decoratePlayer(videoElement, videoElementIndex) {
     var parent;
     var bRoyalSlider = false;
@@ -439,7 +452,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
         }
     }
 
-    container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
+    container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
 
     // Create index indicator if Royal Slider
@@ -478,11 +491,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
 
     // Create credits element if not RoyalSlider or if last player from RoyalSlider
     if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch: 
-        var credits = document.createElement('div');
-        credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
-        credits.innerHTML = 'Arte Downloader v.' + GM_info.script.version
-                        + ' built by and for the community with love'
-                        + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+        var credits = createCreditsElement();
         parent.appendChild(credits);
 
     }
@@ -620,7 +629,7 @@ function analysePlayer(videoElement, videoElementIndex) {
                             // Decorate
                             var container = document.createElement('div');
                             insertAfter(container, videoElement);
-                            container.setAttribute('class', 'ArteDownloader-v' + GM_info.script.version)
+                            container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
                             container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
                             var button = document.createElement('a');
                             button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
