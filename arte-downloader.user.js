@@ -112,6 +112,7 @@ var languages = {
     'VOF-STE[ESP]': 'Original in french subtitled in spanish',
     'VOA-STA': 'Original in german subtitled',
     'VOA-STF': 'Original in german subtitled in french',
+    'VOA-STE[ANG]': 'Original in german subtitled in english',
     'VOF-STMF': 'Original in french for hearing impaired',
     'VOA-STMA': 'Original in german for hearing impaired',
     'VF': 'French dubbed',
