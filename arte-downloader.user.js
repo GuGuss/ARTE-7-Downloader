@@ -524,7 +524,7 @@ function getVideoName(videoElementIndex) {
 }
 
 function getVideoUrl(videoElementIndex, quality, language) {
-    //console.log("> Looking for a " + quality + " quality track in " + language + ", for player " + videoElementIndex);
+    console.log("> Looking for a " + quality + " quality track in " + language + ", for player " + videoElementIndex);
 
     // Get videos object
     var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
