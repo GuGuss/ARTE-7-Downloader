@@ -463,6 +463,12 @@ function decoratePlayer(videoElement, videoElementIndex) {
         container.appendChild(indexElement);
     }
 
+    // Create video name span
+    var videoNameSpan = document.createElement('span');
+    videoNameSpan.innerHTML = "<strong>Download " + getVideoName(videoElementIndex) + " </strong>";
+    videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+    container.appendChild(videoNameSpan);
+
     // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
