@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4.1
+// @version     2.4.2
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_setValue
@@ -43,15 +43,15 @@
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     
     @TODO
-    - Arte cinema magazine: http://cinema.arte.tv/fr/magazine/blow-up
+    - Arte cinema magazine decoration: http://cinema.arte.tv/fr/magazine/blow-up
     - Arte cinema: http://cinema.arte.tv/fr
-    - Arte creative: http://creative.arte.tv/fr/starwars-retourenforce
+    - Arte creative decoration: http://creative.arte.tv/fr/starwars-retourenforce
 */
 
 
 /* --- GLOBAL VARIABLES --- */
 //var scriptVersion = GM_info !== undefined || GM_info !== null ? GM_info.script.version : "2.4";
-var scriptVersion = "2.4.1";
+var scriptVersion = "2.4.2";
 
 // counter for script runs
 //var counter = GM_getValue('counter', 0);
@@ -83,6 +83,7 @@ var players = []; // players.push({});
 var videoPlayerClass = {
     'live': 'arte_vp_live-url',
     '+7': 'arte_vp_url',
+    'oembed': 'arte_vp_url_oembed',
     'generic': 'data-url',
     'teaser': 'data-teaser-url'
 };
@@ -600,8 +601,23 @@ function analysePlayer(videoElement, videoElementIndex) {
         }
     }
 
+    // oembed
+    if (key === "oembed") {
+        // Find the player JSON in the URL
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: playerUrl,
+            onload: function (response) {
+                var jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
+                if (jsonUrl !== undefined) {
+                    parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
+                }
+            }
+        });
+    }
+
     // iframe embedded media
-    if (playerUrl === null) {
+    else if (playerUrl === null) {
 
         // Get src attribute
         playerUrl = unescape(videoElement.getAttribute('src'));
@@ -678,7 +694,7 @@ function analysePlayer(videoElement, videoElementIndex) {
             }
         });
     }
-};
+}
 
 
 
