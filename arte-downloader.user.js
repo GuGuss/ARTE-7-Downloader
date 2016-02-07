@@ -284,25 +284,31 @@ function createButtonMetadata(videoElementIndex) {
     button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     var title = getVideoName(videoElementIndex);
-    if (title === undefined) {
-        return null;
+    var descriptionFlag = false;
+    if (title !== undefined) {
+        descriptionFlag = true;
     }
     var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
-    if (description_short === undefined) {
-        return null;
+    if (description_short !== undefined) {
+        descriptionFlag = true;
     }
     var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    if (subtitle === undefined) {
-        return null;
+    if (subtitle !== undefined) {
+        descriptionFlag = true;
     }
     var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    if (description === undefined) {
-        return null;
+    if (description !== undefined) {
+        descriptionFlag = true;
     }
     var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
-    if (tags === undefined) {
+    if (tags !== undefined) {
+        descriptionFlag = true;
+    }
+
+    if (descriptionFlag === false) {
         return null;
     }
+
     var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
 
     // Properly encode to Base 64.
