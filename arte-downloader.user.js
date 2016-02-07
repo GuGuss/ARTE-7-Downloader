@@ -194,9 +194,8 @@ function preParsePlayerJson(videoElementIndex) {
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
                 nbHTTP[videoElementIndex]++;
-                //console.log(nbHTTP[videoElementIndex]);
             }
-            else if (video["videoFormat"] === "RMP4") {
+            else if (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp") {
                 nbRTMP[videoElementIndex]++;
             }
             else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
@@ -616,7 +615,7 @@ function analysePlayer(videoElement, videoElementIndex) {
         });
     }
 
-    // iframe embedded media
+        // iframe embedded media
     else if (playerUrl === null) {
 
         // Get src attribute
