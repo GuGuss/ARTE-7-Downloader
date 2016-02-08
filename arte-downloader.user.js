@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4.1
+// @version     2.4.2
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_setValue
@@ -43,15 +43,15 @@
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
     
     @TODO
-    - Arte cinema magazine: http://cinema.arte.tv/fr/magazine/blow-up
+    - Arte cinema magazine decoration: http://cinema.arte.tv/fr/magazine/blow-up
     - Arte cinema: http://cinema.arte.tv/fr
-    - Arte creative: http://creative.arte.tv/fr/starwars-retourenforce
+    - Arte creative decoration: http://creative.arte.tv/fr/starwars-retourenforce
 */
 
 
 /* --- GLOBAL VARIABLES --- */
 //var scriptVersion = GM_info !== undefined || GM_info !== null ? GM_info.script.version : "2.4";
-var scriptVersion = "2.4.1";
+var scriptVersion = "2.4.2";
 
 // counter for script runs
 //var counter = GM_getValue('counter', 0);
@@ -83,6 +83,7 @@ var players = []; // players.push({});
 var videoPlayerClass = {
     'live': 'arte_vp_live-url',
     '+7': 'arte_vp_url',
+    'oembed': 'arte_vp_url_oembed',
     'generic': 'data-url',
     'teaser': 'data-teaser-url'
 };
@@ -112,6 +113,7 @@ var languages = {
     'VOF-STE[ESP]': 'Original in french subtitled in spanish',
     'VOA-STA': 'Original in german subtitled',
     'VOA-STF': 'Original in german subtitled in french',
+    'VOA-STE[ANG]': 'Original in german subtitled in english',
     'VOF-STMF': 'Original in french for hearing impaired',
     'VOA-STMA': 'Original in german for hearing impaired',
     'VF': 'French dubbed',
@@ -192,9 +194,8 @@ function preParsePlayerJson(videoElementIndex) {
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
                 nbHTTP[videoElementIndex]++;
-                //console.log(nbHTTP[videoElementIndex]);
             }
-            else if (video["videoFormat"] === "RMP4") {
+            else if (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp") {
                 nbRTMP[videoElementIndex]++;
             }
             else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
@@ -283,25 +284,31 @@ function createButtonMetadata(videoElementIndex) {
     button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
 
     var title = getVideoName(videoElementIndex);
-    if (title === undefined) {
-        return null;
+    var descriptionFlag = false;
+    if (title !== undefined) {
+        descriptionFlag = true;
     }
     var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
-    if (description_short === undefined) {
-        return null;
+    if (description_short !== undefined) {
+        descriptionFlag = true;
     }
     var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    if (subtitle === undefined) {
-        return null;
+    if (subtitle !== undefined) {
+        descriptionFlag = true;
     }
     var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    if (description === undefined) {
-        return null;
+    if (description !== undefined) {
+        descriptionFlag = true;
     }
     var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
-    if (tags === undefined) {
+    if (tags !== undefined) {
+        descriptionFlag = true;
+    }
+
+    if (descriptionFlag === false) {
         return null;
     }
+
     var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
 
     // Properly encode to Base 64.
@@ -463,6 +470,12 @@ function decoratePlayer(videoElement, videoElementIndex) {
         container.appendChild(indexElement);
     }
 
+    // Create video name span
+    var videoNameSpan = document.createElement('span');
+    videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + "</strong>";
+    videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+    container.appendChild(videoNameSpan);
+
     // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
@@ -524,7 +537,7 @@ function getVideoName(videoElementIndex) {
 }
 
 function getVideoUrl(videoElementIndex, quality, language) {
-    //console.log("> Looking for a " + quality + " quality track in " + language + ", for player " + videoElementIndex);
+    console.log("> Looking for a " + quality + " quality track in " + language + ", for player " + videoElementIndex);
 
     // Get videos object
     var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
@@ -593,8 +606,23 @@ function analysePlayer(videoElement, videoElementIndex) {
         }
     }
 
-    // iframe embedded media
-    if (playerUrl === null) {
+    // oembed
+    if (key === "oembed") {
+        // Find the player JSON in the URL
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: playerUrl,
+            onload: function (response) {
+                var jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
+                if (jsonUrl !== undefined) {
+                    parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
+                }
+            }
+        });
+    }
+
+        // iframe embedded media
+    else if (playerUrl === null) {
 
         // Get src attribute
         playerUrl = unescape(videoElement.getAttribute('src'));
@@ -671,7 +699,7 @@ function analysePlayer(videoElement, videoElementIndex) {
             }
         });
     }
-};
+}
 
 
 
