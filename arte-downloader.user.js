@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4.2
+// @version     2.4.3
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_setValue
@@ -51,7 +51,7 @@
 
 /* --- GLOBAL VARIABLES --- */
 //var scriptVersion = GM_info !== undefined || GM_info !== null ? GM_info.script.version : "2.4";
-var scriptVersion = "2.4.2";
+var scriptVersion = "2.4.3";
 
 // counter for script runs
 //var counter = GM_getValue('counter', 0);
@@ -103,26 +103,40 @@ var qualityCode = {
 // Reference languages object
 var languages = {
     // 'versionCode'    : 'language'
+
+    // VO
     'VO': 'Original',
     'VO-STF': 'Original subtitled in french',
+    'VO-STA': 'Original subtitled in german',
+    'VO-STE[ANG]': 'Original subtitled in english',
+    'VO-STE[ESP]': 'Original subtitled in spanish',
+
+    // VOF
     'VOF': 'Original in french',
-    'VOA': 'Original in german',
     'VOF-STF': 'Original in french subtitled',
     'VOF-STA': 'Original in french subtitled in german',
     'VOF-STE[ANG]': 'Original in french subtitled in english',
     'VOF-STE[ESP]': 'Original in french subtitled in spanish',
+    'VOF-STMF': 'Original in french for hearing impaired',
+
+    // VOA
+    'VOA': 'Original in german',
+    'VOA-STMA': 'Original in german for hearing impaired',
     'VOA-STA': 'Original in german subtitled',
     'VOA-STF': 'Original in german subtitled in french',
     'VOA-STE[ANG]': 'Original in german subtitled in english',
-    'VOF-STMF': 'Original in french for hearing impaired',
-    'VOA-STMA': 'Original in german for hearing impaired',
+    'VOA-STE[ESP]': 'Original in german subtitled in spanish',
+
+    // VF
     'VF': 'French dubbed',
-    'VA': 'German dubbed',
-    'VA-STA': 'German dubbed subtitled',
     'VF-STF': 'French dubbed subtitled',
     'VF-STMF': 'French dubbed for hearing impaired',
-    'VA-STMA': 'German dubbed for hearing impaired',
     'VFAUD': 'French with audio description',
+
+    // VA
+    'VA': 'German dubbed',
+    'VA-STA': 'German dubbed subtitled',
+    'VA-STMA': 'German dubbed for hearing impaired',
     'VAAUD': 'German with audio description'
 };
 
@@ -181,11 +195,19 @@ function addLanguage(videoElementIndex, language) {
     }
 }
 
+function isNewLanguageTag(tag) {
+    if (languages[tag] === undefined) {
+        return true;
+    }
+    return false;
+}
+
 function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
         var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
         var video = null;
         nbVideos[videoElementIndex] = videos.length;
+        var langTags = "";
 
         // Loop through all videos URLs.
         for (var key in videos) {
@@ -204,7 +226,14 @@ function preParsePlayerJson(videoElementIndex) {
 
             // Add the language
             addLanguage(videoElementIndex, video["versionCode"]);
-            //console.log(video["versionCode"]) // find new lang tags
+
+            // Find new lang tags
+            if (isNewLanguageTag(video["versionCode"])) {
+                langTags += " | " + video["versionCode"];
+            }
+        }
+        if (langTags !== "") {
+            console.log("New language tags found: " + langTags)
         }
 
         // Display preparse info
@@ -355,7 +384,7 @@ function createLanguageComboBox(videoElementIndex) {
 
     // Keeping uniform style
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', 'padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    languageComboBox.setAttribute('style', 'width:200px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return languageComboBox;
 }
@@ -386,7 +415,7 @@ function createQualityComboBox(videoElementIndex) {
 
     // Keeping uniform style
     qualityComboBox.setAttribute('class', 'btn btn-default');
-    qualityComboBox.setAttribute('style', 'padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
 
     return qualityComboBox;
 }
@@ -472,7 +501,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
 
     // Create video name span
     var videoNameSpan = document.createElement('span');
-    videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + "</strong>";
+    videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + "</strong><br/>";
     videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
     container.appendChild(videoNameSpan);
 
