@@ -110,7 +110,7 @@ var languages = {
 
     // VF
     'VF': 'French dubbed',
-    //'VF-STF': 'French dubbed subtitled',
+    'VF-STF': 'French dubbed subtitled',
     'VF-STMF': 'French dubbed for hearing impaired',
     'VFAUD': 'French with audio description',
 
