@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     http://*.arte.tv/*
-// @version     2.4.3
+// @version     2.5
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_setValue
@@ -50,26 +50,8 @@
 
 
 /* --- GLOBAL VARIABLES --- */
-//var scriptVersion = GM_info !== undefined || GM_info !== null ? GM_info.script.version : "2.4";
-var scriptVersion = "2.4.3";
+var scriptVersion = "2.5";
 
-// counter for script runs
-//var counter = GM_getValue('counter', 0);
-//console.log(GM_info.script.name + ' has been run ' + counter + ' times.');
-//GM_setValue('counter', ++counter);
-
-
-// Set this to 1 to enable console logs.
-var debug_mode = 1;
-if (!debug_mode) {
-    console.log('GM debug mode disabled');
-    console.log = function () { };
-}
-else {
-    console.log('GM debug mode enabled');
-}
-
-// TODO: struct array instead of this garbage
 // eg.: player[i].nbHTTP
 var nbVideoPlayers;
 var playerJson;
@@ -79,6 +61,7 @@ var nbRTMP;
 var nbHLS;
 var availableLanguages;
 var players = []; // players.push({});
+var videoPlayerElements;
 
 var videoPlayerClass = {
     'live': 'arte_vp_live-url',
@@ -100,10 +83,8 @@ var qualityCode = {
     '216p (300 kbps)': 'MQ'
 };
 
-// Reference languages object
+// Reference languages object 'versionCode':'language'
 var languages = {
-    // 'versionCode'    : 'language'
-
     // VO
     'VO': 'Original',
     'VO-STF': 'Original subtitled in french',
@@ -129,7 +110,7 @@ var languages = {
 
     // VF
     'VF': 'French dubbed',
-    'VF-STF': 'French dubbed subtitled',
+    //'VF-STF': 'French dubbed subtitled',
     'VF-STMF': 'French dubbed for hearing impaired',
     'VFAUD': 'French with audio description',
 
@@ -156,7 +137,6 @@ function hasClass(element, cls) {
 }
 
 // Get a parent node of the chosen type and class
-// NB: yes this is discriminatory.
 function getParent(nodeReference, nodeName, classString) {
     var parent = node;
     var nbNodeIteration = 0;
@@ -195,18 +175,11 @@ function addLanguage(videoElementIndex, language) {
     }
 }
 
-function isNewLanguageTag(tag) {
-    if (languages[tag] === undefined) {
-        return true;
-    }
-    return false;
-}
-
 function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
         var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
-        var video = null;
         nbVideos[videoElementIndex] = videos.length;
+        var video = null;
         var langTags = "";
 
         // Loop through all videos URLs.
@@ -227,13 +200,10 @@ function preParsePlayerJson(videoElementIndex) {
             // Add the language
             addLanguage(videoElementIndex, video["versionCode"]);
 
-            // Find new lang tags
-            if (isNewLanguageTag(video["versionCode"])) {
+            // Check if it's a new lang tag
+            if (languages[video["versionCode"]] === undefined) {
                 langTags += " | " + video["versionCode"];
             }
-        }
-        if (langTags !== "") {
-            console.log("New language tags found: " + langTags)
         }
 
         // Display preparse info
@@ -248,7 +218,7 @@ function preParsePlayerJson(videoElementIndex) {
                 languagesFound += "\n    - " + availableLanguages[videoElementIndex][l];
             }
         }
-        console.log("> Languages:" + languagesFound);
+        console.log("> Languages:" + languagesFound + (langTags !== "" ? "\n\n    ! Unreferenced tags: " + langTags : ""));
     }
 }
 
@@ -267,8 +237,6 @@ function createButtonDownload(videoElementIndex, language) {
     // Check if video exists
     if (videoUrl === null) {
         console.log("Could not find video feed");
-
-        // Don't create button
         return null;
     }
 
@@ -297,58 +265,32 @@ function createButtonDownload(videoElementIndex, language) {
     button.setAttribute('href', videoUrl);
     button.setAttribute('target', '_blank');
     button.setAttribute('download', getVideoName(videoElementIndex) + ".mp4");
-
-    // Keeping uniform style
     button.setAttribute('class', 'btn btn-default');
     button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return button;
 }
 
 function createButtonMetadata(videoElementIndex) {
-    var button = document.createElement('a');
-
-    // Keeping uniform style
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-    button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
-
     var title = getVideoName(videoElementIndex);
-    var descriptionFlag = false;
-    if (title !== undefined) {
-        descriptionFlag = true;
-    }
     var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
-    if (description_short !== undefined) {
-        descriptionFlag = true;
-    }
     var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    if (subtitle !== undefined) {
-        descriptionFlag = true;
-    }
     var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    if (description !== undefined) {
-        descriptionFlag = true;
-    }
     var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
-    if (tags !== undefined) {
-        descriptionFlag = true;
-    }
 
-    if (descriptionFlag === false) {
+    // Continue if at least one field is filled
+    if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
+        var button = document.createElement('a');
+        button.setAttribute('class', 'btn btn-default');
+        button.setAttribute('style', 'margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+        button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
+        var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
+        var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
+        button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
+        button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
+        return button;
+    } else {
         return null;
     }
-
-    var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
-
-    // Properly encode to Base 64.
-    var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
-
-    // The href will output a text file. 
-    // For a CSV file, that would be: data:application/octet-stream,field1%2Cfield2%0Afoo%2Cbar%0Agoo%2Cgai%0A
-    button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
-    button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
-
-    return button;
 }
 
 function getComboboxSelectedValue(combobox) {
@@ -375,17 +317,15 @@ function createLanguageComboBox(videoElementIndex) {
         }
     };
 
-    // Fill options
+    // Fill with available languages
     for (l in availableLanguages[videoElementIndex]) {
         if (availableLanguages[videoElementIndex][l] !== 0) {
             languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[videoElementIndex][l] + "</option>";
+            break;
         }
     }
-
-    // Keeping uniform style
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', 'width:200px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-
+    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "width:200px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
     return languageComboBox;
 }
 
@@ -408,23 +348,19 @@ function createQualityComboBox(videoElementIndex) {
         }
     };
 
-    // Fill options
+    // Fill with available qualities
     for (q in qualityCode) {
         qualityComboBox.innerHTML += "<option value='" + q + "'>" + q + "</option>";
     }
-
-    // Keeping uniform style
     qualityComboBox.setAttribute('class', 'btn btn-default');
     qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-
     return qualityComboBox;
 }
 
 function createCreditsElement() {
     var credits = document.createElement('div');
     credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
-    credits.innerHTML = 'Arte Downloader v.' + scriptVersion
-                    + ' built by and for the community with love'
+    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love'
                     + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
     return credits;
 }
@@ -487,7 +423,6 @@ function decoratePlayer(videoElement, videoElementIndex) {
             parent.appendChild(container);
         }
     }
-
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
 
@@ -508,19 +443,18 @@ function decoratePlayer(videoElement, videoElementIndex) {
     // Create language combobox
     var languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
-    var selectedLanguage;
 
     // Check if there are languages available to select
+    var selectedLanguage;
     if (languageComboBox.options.length > 0) {
         selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
     }
 
     // Create quality combobox
-    var qualityComboBox = createQualityComboBox(videoElementIndex)
-    container.appendChild(qualityComboBox);
+    container.appendChild(createQualityComboBox(videoElementIndex));
 
     // Create download button
-    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage)
+    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage);
     if (btnDownload !== null) {
         container.appendChild(btnDownload);
     }
@@ -528,22 +462,21 @@ function decoratePlayer(videoElement, videoElementIndex) {
     // Create metadata button
     var btnMetadata = createButtonMetadata(videoElementIndex);
     if (btnMetadata !== null) {
-        container.appendChild(btnMetadata); // @TODO display instead of download
+        container.appendChild(btnMetadata);
     }
 
     // Create credits element if not RoyalSlider or if last player from RoyalSlider
-    if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch: 
+    if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch with javascript XHR requests concurrency
         var credits = createCreditsElement();
         parent.appendChild(credits);
-
     }
 }
 
-function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
-    console.log("    - #" + videoElementIndex + " player JSON: " + playerUrl);
+function parsePlayerJson(playerJsonUrl, videoElement, videoElementIndex) {
+    console.log("    - #" + videoElementIndex + " player JSON: " + playerJsonUrl);
     GM_xmlhttpRequest({
         method: "GET",
-        url: playerUrl,
+        url: playerJsonUrl,
         onload: function (response) {
             playerJson[videoElementIndex] = JSON.parse(response.responseText);
             preParsePlayerJson(videoElementIndex);
@@ -551,7 +484,6 @@ function parsePlayerJson(playerUrl, videoElement, videoElementIndex) {
         }
     });
 }
-
 
 function getVideoName(videoElementIndex) {
     var name = playerJson[videoElementIndex]['videoJsonPlayer']['VTI'];
@@ -578,19 +510,12 @@ function getVideoUrl(videoElementIndex, quality, language) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
 
-            // Check if video format is "HBBTV" (HTTP).
-            if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
-
-                // Check language
-                if (video["versionCode"] === language) {
-
-                    // Get the video URL using the requested quality.
-                    if (video["VQU"] === quality || video["quality"] === quality) {
-                        var url = video["url"];
-                        console.log("> " + quality + " quality MP4 in " + language + ": " + url);
-                        return (url);
-                    }
-                }
+            // Check language, format, quality
+            if (video["versionCode"] === language
+                && (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4")
+                && (video["VQU"] === quality || video["quality"] === quality)) {
+                console.log("> " + quality + " quality MP4 in " + language + ": " + video["url"]);
+                return video["url"];
             }
         }
     }
@@ -602,7 +527,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
             if (video["videoFormat"] === "RMP4" && (video["VQU"] === quality || video["quality"] === quality)) {
                 var url = video["streamer"] + video["url"];
                 console.log("> " + quality + "RTMP stream: " + url);
-                return (url);
+                return url;
             }
         }
     }
@@ -612,22 +537,21 @@ function getVideoUrl(videoElementIndex, quality, language) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if ((video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") && (video["VQU"] === quality || video["quality"] === quality)) {
-                var url = video["url"];
-                console.log("> HLS stream: " + url);
-                return (url);
+                console.log("> HLS stream: " + video["url"]);
+                return video["url"];
             }
         }
     }
 
-    // No video feed
     console.log("...not found.")
     return '';
 }
 
-function analysePlayer(videoElement, videoElementIndex) {
+function findPlayerJson(videoElement, videoElementIndex) {
 
-    // Get player URL
+    // Get player URL to find its associated json
     var playerUrl = null;
+    var jsonUrl = null;
     for (key in videoPlayerClass) {
         playerUrl = videoElement.getAttribute(videoPlayerClass[key]);
         if (playerUrl !== null) {
@@ -636,13 +560,12 @@ function analysePlayer(videoElement, videoElementIndex) {
     }
 
     // oembed
-    if (key === "oembed") {
-        // Find the player JSON in the URL
+    if (playerUrl !== null && key === "oembed") {
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function (response) {
-                var jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
+                jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
                 if (jsonUrl !== undefined) {
                     parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
                 }
@@ -652,16 +575,12 @@ function analysePlayer(videoElement, videoElementIndex) {
 
         // iframe embedded media
     else if (playerUrl === null) {
-
-        // Get src attribute
         playerUrl = unescape(videoElement.getAttribute('src'));
 
-        // Get JSON URL
-        var jsonUrl = playerUrl.split('json_url=')[1];
+        jsonUrl = playerUrl.split('json_url=')[1];
         if (jsonUrl !== undefined) {
             parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
-        }
-        else {
+        } else {
             // Find the 360 video in the URL
             console.log("> Searching a 360 video for " + playerUrl);
             GM_xmlhttpRequest({
@@ -704,40 +623,32 @@ function analysePlayer(videoElement, videoElementIndex) {
         }
     }
 
-    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") { // Check if player URL points to a JSON
+        // Check if player URL is the json
+    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     }
 
+        // Look for player URL inside the livestream player json
     else {
-        // Find the player JSON in the URL
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function (response) {
-
-                // Look for player URL inside the livestream player URL
                 var json = JSON.parse(response.responseText);
                 playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
 
-                // not found ? Look for playlist file inside the livestream player
-                if (playerUrl === undefined) {
+                if (playerUrl === undefined) { // not found ? Look for playlist file inside the livestream player
                     console.log("Video player URL not available. Fetching livestream player URL");
                     playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
                 }
+                console.log("FUCKDAT")
                 parsePlayerJson(playerUrl, videoElement, videoElementIndex);
             }
         });
     }
 }
 
-
-
-/* --- MAIN SCRIPT ENTRY --- */
-main();
-
-function main() {
-    var videoPlayerElements;
-
+function findPlayers() {
     // Check regular tags
     for (tag in videoPlayerClass) {
         videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
@@ -767,9 +678,10 @@ function main() {
     }
 
     nbVideoPlayers = videoPlayerElements.length;
-    console.log("> Found " + nbVideoPlayers + " video players:");
+    console.log("> Found " + nbVideoPlayers + " video player(s):");
+}
 
-    // Initialize players info arrays
+function init() {
     playerJson = new Array(nbVideoPlayers);
     nbVideos = new Array(nbVideoPlayers);
     nbHTTP = new Array(nbVideoPlayers);
@@ -791,9 +703,20 @@ function main() {
             availableLanguages[i][l] = 0;
         }
     }
+}
 
-    // Analyse each video player
-    for (var i = 0; i < nbVideoPlayers; i++) {
-        analysePlayer(videoPlayerElements[i], i);
+
+
+/* --- MAIN SCRIPT ENTRY --- */
+main();
+function main() {
+    findPlayers();
+    if (nbVideoPlayers > 0) {
+        init();
+
+        // Parse each video player
+        for (var i = 0; i < nbVideoPlayers; i++) {
+            findPlayerJson(videoPlayerElements[i], i);
+        }
     }
 }
