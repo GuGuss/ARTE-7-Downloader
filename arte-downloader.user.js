@@ -52,17 +52,19 @@
 /* --- GLOBAL VARIABLES --- */
 var scriptVersion = "2.5";
 var player = [];
-var nbVideoPlayers;
+var nbVideoPlayers = 0;
 var playerJson;
 var nbVideos;
 var nbHTTP;
 var nbRTMP;
 var nbHLS;
 var availableLanguages;
+var availableQualities;
 var videoPlayerElements;
 
 var videoPlayerClass = {
     'live': 'arte_vp_live-url',
+    'live-oembed': 'arte_vp_live-url-oembed',
     '+7': 'arte_vp_url',
     'oembed': 'arte_vp_url_oembed',
     'generic': 'data-url',
@@ -75,10 +77,10 @@ var videoPlayerClassEmbedded = {
 };
 
 var qualityCode = {
-    '720p (2200 kbps)': 'SQ',
-    '406p (1500 kbps)': 'EQ',
-    '406p (800 kbps)': 'HQ',
-    '216p (300 kbps)': 'MQ'
+    'SQ': '720p (2200 kbps)',
+    'EQ': '406p (1500 kbps)',
+    'HQ': '406p (800 kbps)',
+    'MQ': '216p (300 kbps)'
 };
 
 // Reference languages object 'versionCode':'language'
@@ -116,7 +118,11 @@ var languages = {
     'VA': 'German dubbed',
     'VA-STA': 'German dubbed subtitled',
     'VA-STMA': 'German dubbed for hearing impaired',
-    'VAAUD': 'German with audio description'
+    'VAAUD': 'German with audio description',
+
+    // Live
+    'liveFR': 'Live french',
+    'liveDE': 'Live german'
 };
 
 
@@ -173,6 +179,13 @@ function addLanguage(videoElementIndex, language) {
     }
 }
 
+function addQuality(videoElementIndex, quality) {
+    if (availableQualities[videoElementIndex][quality] === 0) {
+        console.log(quality);
+        availableQualities[videoElementIndex][quality] = qualityCode[quality];
+    }
+}
+
 function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
         var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
@@ -195,13 +208,17 @@ function preParsePlayerJson(videoElementIndex) {
                 nbHLS[videoElementIndex]++;
             }
 
-            // Add the language
+            // Add to available languages
             addLanguage(videoElementIndex, video["versionCode"]);
 
             // Check if it's a new lang tag
             if (languages[video["versionCode"]] === undefined) {
                 langTags += " | " + video["versionCode"];
             }
+
+            // Add to available qualities
+            var quality = (video["VQU"] !== undefined ? video["VQU"] : video["quality"]);
+            addQuality(videoElementIndex, quality);
         }
 
         // Display preparse info
@@ -225,7 +242,7 @@ function createButtonDownload(videoElementIndex, language) {
     var videoUrl;
 
     for (q in qualityCode) {
-        videoUrl = getVideoUrl(videoElementIndex, qualityCode[q], language);
+        videoUrl = getVideoUrl(videoElementIndex, q, language);
         if (videoUrl !== '') {
             quality = q;
             break;
@@ -250,7 +267,7 @@ function createButtonDownload(videoElementIndex, language) {
 
         // Check HLS stream : should not happen
     else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
-        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> HLS master stream</a> (copy/paste into Apple Quicktime or <a href='https://www.videolan.org/vlc/'>into VLC</a>) <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> Apple Quicktime > open HLS stream</a><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Unknown URL format : should not happen
@@ -306,7 +323,7 @@ function createLanguageComboBox(videoElementIndex) {
         console.log("\n> Language changed to " + selectedLanguage);
         var btn = document.getElementById('btnDownload' + videoElementIndex);
         var selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
-        var url = getVideoUrl(videoElementIndex, qualityCode[selectedQuality], selectedLanguage);
+        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
         if (url !== '') {
             btn.style.visibility = "visible";
             btn.setAttribute('href', url);
@@ -322,7 +339,7 @@ function createLanguageComboBox(videoElementIndex) {
         }
     }
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "width:200px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
+    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "width:140px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
     return languageComboBox;
 }
 
@@ -336,7 +353,7 @@ function createQualityComboBox(videoElementIndex) {
         console.log("\n> Quality changed to " + selectedQuality);
         var btn = document.getElementById('btnDownload' + videoElementIndex);
         var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
-        var url = getVideoUrl(videoElementIndex, qualityCode[selectedQuality], selectedLanguage);
+        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
         if (url !== '') {
             btn.style.visibility = "visible";
             btn.setAttribute('href', url);
@@ -346,8 +363,10 @@ function createQualityComboBox(videoElementIndex) {
     };
 
     // Fill with available qualities
-    for (q in qualityCode) {
-        qualityComboBox.innerHTML += "<option value='" + q + "'>" + q + "</option>";
+    for (q in availableQualities[videoElementIndex]) {
+        if (availableQualities[videoElementIndex][q] !== 0) {
+            qualityComboBox.innerHTML += "<option value='" + q + "'>" + availableQualities[videoElementIndex][q] + "</option>";
+        }
     }
     qualityComboBox.setAttribute('class', 'btn btn-default');
     qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
@@ -387,6 +406,14 @@ function decoratePlayer(videoElement, videoElementIndex) {
             insertAfter(container, parent);
         }
     }
+
+        // http://www.arte.tv/arte_vp
+        //else if (videoElement.nodeName === "BODY" && stringStartsWith(location.href, "http://www.arte.tv/arte_vp/")) {
+        //    console.log("> Decorating arte_vp" + location.href);
+        //    var child = document.getElementById("arte_vp_player_container");
+        //    child.parentNode.insertBefore(container, child);
+        //    parent = container;
+        //}
 
         // royal slider player
     else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
@@ -525,7 +552,10 @@ function getVideoUrl(videoElementIndex, quality, language) {
     if (nbRTMP[videoElementIndex] > 0) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
-            if (video["videoFormat"] === "RMP4" && (video["VQU"] === quality || video["quality"] === quality)) {
+            if ((video["versionCode"] === language || language === undefined)
+                    && (video["VQU"] === quality || video["quality"] === quality)
+                    && (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp")
+                ) {
                 var url = video["streamer"] + video["url"];
                 console.log("> " + quality + " RTMP stream: " + url);
                 return url;
@@ -544,7 +574,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
         }
     }
 
-    console.log("...not found.")
+    console.log("> Video not found.")
     return '';
 }
 
@@ -561,7 +591,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
     }
 
     // oembed
-    if (playerUrl !== null && key === "oembed") {
+    if (playerUrl !== null && (key === "oembed" || (key === "live-oembed"))) {
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
@@ -572,6 +602,12 @@ function findPlayerJson(videoElement, videoElementIndex) {
                 }
             }
         });
+    }
+
+        // http://www.arte.tv/arte_vp/
+    else if (stringStartsWith(location.href, "http://www.arte.tv/arte_vp/")) {
+        playerUrl = unescape(location.href.split("json_url=")[1]);
+        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     }
 
         // iframe embedded media
@@ -677,6 +713,10 @@ function findPlayers() {
         }
     }
 
+    // check arte_vp
+    if (videoPlayerElements.length === 0) {
+        videoPlayerElements = document.querySelectorAll("body.arte_vp_body");
+    }
     nbVideoPlayers = videoPlayerElements.length;
     console.log("> Found " + nbVideoPlayers + " video player(s):");
 }
@@ -699,6 +739,7 @@ function init() {
     nbRTMP = new Array(nbVideoPlayers);
     nbHLS = new Array(nbVideoPlayers);
     availableLanguages = new Array(nbVideoPlayers);
+    availableQualities = new Array(nbVideoPlayers);
     for (i = 0; i < nbVideoPlayers; i++) {
         playerJson[i] = 0;
         nbVideos[i] = 0;
@@ -713,9 +754,17 @@ function init() {
         for (l in availableLanguages[i]) {
             availableLanguages[i][l] = 0;
         }
+
+        // Clone available qualities from base object
+        availableQualities[i] = Object.assign({}, qualityCode);
+
+        // Resets available qualities
+        for (l in availableQualities[i]) {
+            availableQualities[i][l] = 0;
+        }
     }
 
-    player.push({ playerJson, })
+    //player.push({ playerJson, })
 }
 
 
