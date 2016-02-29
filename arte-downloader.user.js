@@ -15,39 +15,31 @@
     Arte-Downloader decorates videos from : 
 
     - Arte live: http://www.arte.tv/guide/fr/direct
-
     - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
-
     - Arte info: http://info.arte.tv/fr/videos?id=71611    
-
     - Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
     - Arte info royal slider:
         > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
         > #2: http://info.arte.tv/fr/interview-de-jerome-fritel        
     - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
     - Arte Info Touslesinternets: http://touslesinternets.arte.tv/inakba-la-seconde-vie-des-villages-palestiniens-disparus/
-
     - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
     - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes    
     - Arte Future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
-
     - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-
     - Arte Concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
     - Arte Concert Tape: http://concert.arte.tv/fr/tape-etienne-daho
-
     - Arte Cinema: http://cinema.arte.tv/fr/program/jude
     - Arte Cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
-
     - Arte Tracks: http://tracks.arte.tv/fr/nicolas-winding-refn-soyez-sympas-rembobinez
     - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
+    - Arte vp: http://www.arte.tv/arte_vp/index.php?json_url=https%3A%2F%2Fapi.arte.tv%2Fapi%2Fplayer%2Fv1%2Fconfig%2Ffr%2F066698-000-A%3Fplatform%3DEXTERNAL%26autostart%3D0%26infoLink%3D%26primaryAudioVersion%3D&amp;lang=fr_FR&amp;config=arte_external
     
     @TODO
     - Arte cinema magazine decoration: http://cinema.arte.tv/fr/magazine/blow-up
     - Arte cinema: http://cinema.arte.tv/fr
     - Arte creative decoration: http://creative.arte.tv/fr/starwars-retourenforce
 */
-
 
 /* --- GLOBAL VARIABLES --- */
 var scriptVersion = "2.5";
@@ -133,7 +125,7 @@ function insertAfter(newNode, referenceNode) {
 }
 
 function stringStartsWith(string, prefix) {
-    return string.slice(0, prefix.length) == prefix;
+    return string.slice(0, prefix.length) === prefix;
 }
 
 function hasClass(element, cls) {
@@ -181,7 +173,6 @@ function addLanguage(videoElementIndex, language) {
 
 function addQuality(videoElementIndex, quality) {
     if (availableQualities[videoElementIndex][quality] === 0) {
-        console.log(quality);
         availableQualities[videoElementIndex][quality] = qualityCode[quality];
     }
 }
@@ -408,12 +399,21 @@ function decoratePlayer(videoElement, videoElementIndex) {
     }
 
         // http://www.arte.tv/arte_vp
-        //else if (videoElement.nodeName === "BODY" && stringStartsWith(location.href, "http://www.arte.tv/arte_vp/")) {
-        //    console.log("> Decorating arte_vp" + location.href);
-        //    var child = document.getElementById("arte_vp_player_container");
-        //    child.parentNode.insertBefore(container, child);
-        //    parent = container;
-        //}
+    else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
+        console.log("> Decorating arte_vp");
+        var child = document.getElementById("arte_vp_player_container");
+        child.parentNode.insertBefore(container, child);
+        parent = container;
+    }
+
+        // overlayed player for Arte Cinema or media embedded
+    else if (stringStartsWith(location.href, "http://cinema.arte")
+        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
+
+        console.log("> Decorating overlayed Cinema player");
+        parent = parent.parentNode.parentNode;
+        parent.appendChild(container);
+    }
 
         // royal slider player
     else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
@@ -425,15 +425,6 @@ function decoratePlayer(videoElement, videoElementIndex) {
             parent = parent.parentNode;
         }
         insertAfter(container, parent);
-    }
-
-        // overlayed player for Arte Cinema or media embedded
-    else if (stringStartsWith(location.href, "http://cinema.arte")
-        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
-
-        console.log("> Decorating overlayed Cinema player");
-        parent = parent.parentNode.parentNode;
-        parent.appendChild(container);
     }
 
         // regular player
@@ -713,10 +704,11 @@ function findPlayers() {
         }
     }
 
-    // check arte_vp
-    if (videoPlayerElements.length === 0) {
-        videoPlayerElements = document.querySelectorAll("body.arte_vp_body");
+    // Check arte_vp with no parent frame
+    if (videoPlayerElements.length === 0 && stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
+        videoPlayerElements = document.querySelectorAll("body");
     }
+
     nbVideoPlayers = videoPlayerElements.length;
     console.log("> Found " + nbVideoPlayers + " video player(s):");
 }
