@@ -6,35 +6,10 @@
 // @version     2.5
 // @updateURL   https://github.com/GuGuss/ARTE-7-Playground/blob/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
-// @grant       GM_setValue
-// @grant       GM_getValue
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
 
 /*
-    Arte-Downloader decorates videos from : 
-
-    - Arte live: http://www.arte.tv/guide/fr/direct
-    - Arte +7: http://www.arte.tv/guide/fr/057458-000/albert-einstein-portrait-d-un-rebelle
-    - Arte info: http://info.arte.tv/fr/videos?id=71611    
-    - Arte info Story: http://www.arte.tv/sites/fr/story/reportage/areva-uramin-bombe-a-retardement-du-nucleaire-francais/#fitvid0
-    - Arte info royal slider:
-        > #1: http://info.arte.tv/fr/letat-durgence-un-patriot-act-la-francaise
-        > #2: http://info.arte.tv/fr/interview-de-jerome-fritel        
-    - Arte info journal tiles: http://info.arte.tv/fr/emissions/arte-journal
-    - Arte Info Touslesinternets: http://touslesinternets.arte.tv/inakba-la-seconde-vie-des-villages-palestiniens-disparus/
-    - Arte future: http://future.arte.tv/fr/ilesdufutur/les-iles-du-futur-la-serie-documentaire
-    - Arte future embedded : http://future.arte.tv/fr/polar-sea-360deg-les-episodes    
-    - Arte Future 360: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur (powered by http://deep-inc.com/)
-    - Arte creative: http://creative.arte.tv/fr/episode/bonjour-afghanistan
-    - Arte Concert: http://concert.arte.tv/fr/documentaire-dans-le-ventre-de-lorgue-de-notre-dame
-    - Arte Concert Tape: http://concert.arte.tv/fr/tape-etienne-daho
-    - Arte Cinema: http://cinema.arte.tv/fr/program/jude
-    - Arte Cinema embedded: http://cinema.arte.tv/fr/article/tirez-la-langue-mademoiselle-daxelle-ropert-re-voir-pendant-7-jours
-    - Arte Tracks: http://tracks.arte.tv/fr/nicolas-winding-refn-soyez-sympas-rembobinez
-    - Arte Tracks bonus: http://tracks.arte.tv/fr/mickey-mouse-tmr-en-remix-3d
-    - Arte vp: http://www.arte.tv/arte_vp/index.php?json_url=https%3A%2F%2Fapi.arte.tv%2Fapi%2Fplayer%2Fv1%2Fconfig%2Ffr%2F066698-000-A%3Fplatform%3DEXTERNAL%26autostart%3D0%26infoLink%3D%26primaryAudioVersion%3D&amp;lang=fr_FR&amp;config=arte_external
-    
     @TODO
     - Arte cinema magazine decoration: http://cinema.arte.tv/fr/magazine/blow-up
     - Arte cinema: http://cinema.arte.tv/fr
@@ -55,9 +30,9 @@ var qualities;
 var videoPlayerElements;
 
 var videoPlayerClass = {
-    'live': 'arte_vp_live-url',
+    'general': 'video-container',
     'live-oembed': 'arte_vp_live-url-oembed',
-    '+7': 'arte_vp_url',
+    'standard': 'arte_vp_url',
     'oembed': 'arte_vp_url_oembed',
     'generic': 'data-url',
     'teaser': 'data-teaser-url'
