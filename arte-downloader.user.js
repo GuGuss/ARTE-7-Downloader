@@ -75,48 +75,6 @@ var qualityCode = {
     'MQ': '216p (300 kbps)'
 };
 
-// Reference languages object 'versionCode':'language'
-var languages = {
-    // VO
-    'VO': 'Original',
-    'VO-STF': 'Original subtitled in french',
-    'VO-STA': 'Original subtitled in german',
-    'VO-STE[ANG]': 'Original subtitled in english',
-    'VO-STE[ESP]': 'Original subtitled in spanish',
-
-    // VOF
-    'VOF': 'Original in french',
-    'VOF-STF': 'Original in french subtitled',
-    'VOF-STA': 'Original in french subtitled in german',
-    'VOF-STE[ANG]': 'Original in french subtitled in english',
-    'VOF-STE[ESP]': 'Original in french subtitled in spanish',
-    'VOF-STMF': 'Original in french for hearing impaired',
-
-    // VOA
-    'VOA': 'Original in german',
-    'VOA-STMA': 'Original in german for hearing impaired',
-    'VOA-STA': 'Original in german subtitled',
-    'VOA-STF': 'Original in german subtitled in french',
-    'VOA-STE[ANG]': 'Original in german subtitled in english',
-    'VOA-STE[ESP]': 'Original in german subtitled in spanish',
-
-    // VF
-    'VF': 'French dubbed',
-    'VF-STF': 'French dubbed subtitled',
-    'VF-STMF': 'French dubbed for hearing impaired',
-    'VFAUD': 'French with audio description',
-
-    // VA
-    'VA': 'German dubbed',
-    'VA-STA': 'German dubbed subtitled',
-    'VA-STMA': 'German dubbed for hearing impaired',
-    'VAAUD': 'German with audio description',
-
-    // Live
-    'liveFR': 'Live french',
-    'liveDE': 'Live german'
-};
-
 
 
 /* --- FUNCTIONS: utilities --- */
@@ -165,9 +123,9 @@ function getParent(nodeReference, nodeName, classString) {
 
 
 /* --- FUNCTIONS: decorating --- */
-function addLanguage(videoElementIndex, language) {
-    if (availableLanguages[videoElementIndex][language] === 0) {
-        availableLanguages[videoElementIndex][language] = languages[language];
+function addLanguage(videoElementIndex, language, wording) {
+    if (!availableLanguages[videoElementIndex].hasOwnProperty(language)) {
+        availableLanguages[videoElementIndex][language] = wording;
     }
 }
 
@@ -200,12 +158,7 @@ function preParsePlayerJson(videoElementIndex) {
             }
 
             // Add to available languages
-            addLanguage(videoElementIndex, video["versionCode"]);
-
-            // Check if it's a new lang tag
-            if (languages[video["versionCode"]] === undefined) {
-                langTags += " | " + video["versionCode"];
-            }
+            addLanguage(videoElementIndex, video["versionCode"], video["versionLibelle"]);
 
             // Add to available qualities
             var quality = (video["VQU"] !== undefined ? video["VQU"] : video["quality"]);
@@ -220,11 +173,9 @@ function preParsePlayerJson(videoElementIndex) {
             + nbHLS[videoElementIndex] + " HLS streams.");
         var languagesFound = "";
         for (l in availableLanguages[videoElementIndex]) {
-            if (availableLanguages[videoElementIndex][l] !== 0) {
-                languagesFound += "\n    - " + availableLanguages[videoElementIndex][l];
-            }
+            languagesFound += "\n    - " + availableLanguages[videoElementIndex][l];
         }
-        console.log("> Languages:" + languagesFound + (langTags !== "" ? "\n\n    ! Unreferenced tags: " + langTags : ""));
+        console.log("> Languages:" + languagesFound);
     }
 }
 
@@ -330,7 +281,7 @@ function createLanguageComboBox(videoElementIndex) {
         }
     }
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "width:140px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
+    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "max-width: 140px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
     return languageComboBox;
 }
 
@@ -738,15 +689,7 @@ function init() {
         nbHTTP[i] = 0;
         nbRTMP[i] = 0;
         nbHLS[i] = 0;
-
-        // Clone available languages from base object
-        availableLanguages[i] = Object.assign({}, languages);
-
-        // Resets available languages
-        for (l in availableLanguages[i]) {
-            availableLanguages[i][l] = 0;
-        }
-
+        availableLanguages[i] = new Object;
         // Clone available qualities from base object
         availableQualities[i] = Object.assign({}, qualityCode);
 
