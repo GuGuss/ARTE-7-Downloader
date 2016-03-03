@@ -50,8 +50,8 @@ var nbVideos;
 var nbHTTP;
 var nbRTMP;
 var nbHLS;
-var availableLanguages;
-var availableQualities;
+var languages;
+var qualities;
 var videoPlayerElements;
 
 var videoPlayerClass = {
@@ -67,15 +67,6 @@ var videoPlayerClassEmbedded = {
     'story': 'embed.embed--delay iframe',
     'embedded': 'media_embed iframe'
 };
-
-var qualityCode = {
-    'SQ': '720p (2200 kbps)',
-    'EQ': '406p (1500 kbps)',
-    'HQ': '406p (800 kbps)',
-    'MQ': '216p (300 kbps)'
-};
-
-
 
 /* --- FUNCTIONS: utilities --- */
 function insertAfter(newNode, referenceNode) {
@@ -122,16 +113,16 @@ function getParent(nodeReference, nodeName, classString) {
 
 
 
-/* --- FUNCTIONS: decorating --- */
+/* --- FUNCTIONS: analysis --- */
 function addLanguage(videoElementIndex, language, wording) {
-    if (!availableLanguages[videoElementIndex].hasOwnProperty(language)) {
-        availableLanguages[videoElementIndex][language] = wording;
+    if (!languages[videoElementIndex].hasOwnProperty(language)) {
+        languages[videoElementIndex][language] = wording;
     }
 }
 
-function addQuality(videoElementIndex, quality) {
-    if (availableQualities[videoElementIndex][quality] === 0) {
-        availableQualities[videoElementIndex][quality] = qualityCode[quality];
+function addQuality(videoElementIndex, quality, wording) {
+    if (!qualities[videoElementIndex].hasOwnProperty(quality)) {
+        qualities[videoElementIndex][quality] = wording;
     }
 }
 
@@ -139,12 +130,10 @@ function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
         var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
         nbVideos[videoElementIndex] = videos.length;
-        var video = null;
-        var langTags = "";
 
         // Loop through all videos URLs.
         for (var key in videos) {
-            video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
+            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
 
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
@@ -157,13 +146,23 @@ function preParsePlayerJson(videoElementIndex) {
                 nbHLS[videoElementIndex]++;
             }
 
-            // Add to available languages
             addLanguage(videoElementIndex, video["versionCode"], video["versionLibelle"]);
-
-            // Add to available qualities
-            var quality = (video["VQU"] !== undefined ? video["VQU"] : video["quality"]);
-            addQuality(videoElementIndex, quality);
+            addQuality(videoElementIndex, (video["VQU"] !== undefined ? video["VQU"] : video["quality"]), video["height"] ? video["height"] + "p@" + video["bitrate"] + "bps" : video["quality"]);
         }
+
+        // Remove Apple HLS if HTTP available
+        if (nbHTTP[videoElementIndex] > 0) {
+            delete qualities[videoElementIndex]["XS"];
+            delete qualities[videoElementIndex]["XQ"];
+        }
+
+        // Reorder qualities
+        var sortedKeys = Object.keys(qualities[videoElementIndex]).sort(function (a, b) { return qualities[videoElementIndex][b].split('@')[1].split('b')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('b')[0] * 1; }); // array of sorted keys
+        var temp = new Object; // create new object to rearrange qualities according to new key order
+        for (var i = 0; i < sortedKeys.length; i++) {
+            temp[sortedKeys[i]] = qualities[videoElementIndex][sortedKeys[i]];
+        }
+        qualities[videoElementIndex] = temp; // replace with new ordered object
 
         // Display preparse info
         console.log("\n====================================\n              player #" + videoElementIndex + "\n====================================\n> "
@@ -172,275 +171,10 @@ function preParsePlayerJson(videoElementIndex) {
             + nbRTMP[videoElementIndex] + " RTMP streams,\n    - "
             + nbHLS[videoElementIndex] + " HLS streams.");
         var languagesFound = "";
-        for (l in availableLanguages[videoElementIndex]) {
-            languagesFound += "\n    - " + availableLanguages[videoElementIndex][l];
+        for (l in languages[videoElementIndex]) {
+            languagesFound += "\n    - " + languages[videoElementIndex][l];
         }
         console.log("> Languages:" + languagesFound);
-    }
-}
-
-function createButtonDownload(videoElementIndex, language) {
-    var button = document.createElement('a');
-    var videoUrl;
-
-    for (q in qualityCode) {
-        videoUrl = getVideoUrl(videoElementIndex, q, language);
-        if (videoUrl !== '') {
-            quality = q;
-            break;
-        }
-    }
-
-    // Check if video exists
-    if (videoUrl === null) {
-        console.log("Could not find video feed");
-        return null;
-    }
-
-    // Check RTMP stream
-    if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // check first because it ends with .mp4 like HTTP
-        button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
-    }
-
-        // Check HTTP
-    else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
-        button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-    }
-
-        // Check HLS stream : should not happen
-    else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
-        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> Apple Quicktime > open HLS stream</a><span class='icomoon-angle-down force-icomoon-font'></span>";
-    }
-
-        // Unknown URL format : should not happen
-    else {
-        console.log('Unknown URL format');
-        return null;
-    }
-
-    button.setAttribute('id', 'btnDownload' + videoElementIndex); // to refer later in select changes
-    button.setAttribute('href', videoUrl);
-    button.setAttribute('target', '_blank');
-    button.setAttribute('download', getVideoName(videoElementIndex) + ".mp4");
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    return button;
-}
-
-function createButtonMetadata(videoElementIndex) {
-    var title = getVideoName(videoElementIndex);
-    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
-    var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
-
-    // Continue if at least one field is filled
-    if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
-        var button = document.createElement('a');
-        button.setAttribute('class', 'btn btn-default');
-        button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-        button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
-        var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
-        var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
-        button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
-        button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
-        return button;
-    } else {
-        return null;
-    }
-}
-
-function getComboboxSelectedValue(combobox) {
-    var cb = document.getElementById(combobox);
-    return cb[cb.selectedIndex].value;
-}
-
-function createLanguageComboBox(videoElementIndex) {
-    var languageComboBox = document.createElement('select');
-    languageComboBox.setAttribute('id', 'cbLanguage' + videoElementIndex);
-
-    // Associate onchange event with function (bypass for GM)
-    languageComboBox.onchange = function () {
-        var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
-        console.log("\n> Language changed to " + selectedLanguage);
-        var btn = document.getElementById('btnDownload' + videoElementIndex);
-        var selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
-        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
-        if (url !== '') {
-            btn.style.visibility = "visible";
-            btn.setAttribute('href', url);
-        } else {
-            btn.style.visibility = "hidden";
-        }
-    };
-
-    // Fill with available languages
-    for (l in availableLanguages[videoElementIndex]) {
-        if (availableLanguages[videoElementIndex][l] !== 0) {
-            languageComboBox.innerHTML += "<option value='" + l + "'>" + availableLanguages[videoElementIndex][l] + "</option>";
-        }
-    }
-    languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "max-width: 140px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
-    return languageComboBox;
-}
-
-function createQualityComboBox(videoElementIndex) {
-    var qualityComboBox = document.createElement('select');
-    qualityComboBox.setAttribute('id', 'cbQuality' + videoElementIndex);
-
-    // Associate onchange event with function (bypass for GM)
-    qualityComboBox.onchange = function () {
-        var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
-        console.log("\n> Quality changed to " + selectedQuality);
-        var btn = document.getElementById('btnDownload' + videoElementIndex);
-        var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
-        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
-        if (url !== '') {
-            btn.style.visibility = "visible";
-            btn.setAttribute('href', url);
-        } else {
-            btn.style.visibility = "hidden";
-        }
-    };
-
-    // Fill with available qualities
-    for (q in availableQualities[videoElementIndex]) {
-        if (availableQualities[videoElementIndex][q] !== 0) {
-            qualityComboBox.innerHTML += "<option value='" + q + "'>" + availableQualities[videoElementIndex][q] + "</option>";
-        }
-    }
-    qualityComboBox.setAttribute('class', 'btn btn-default');
-    qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    return qualityComboBox;
-}
-
-function createCreditsElement() {
-    var credits = document.createElement('div');
-    credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
-    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love'
-                    + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
-    return credits;
-}
-
-function decoratePlayer(videoElement, videoElementIndex) {
-    var parent;
-    var bRoyalSlider = false;
-    var container = document.createElement('div');
-
-    // Look for the parent to decorate
-    parent = videoElement.parentNode;
-
-    // iframe player
-    if (videoElement.nodeName === "IFRAME") {
-        console.log("> Decorating iFrame player");
-
-        // Arte touslesinternets
-        if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
-            parent.insertBefore(container, videoElement);
-        }
-
-        else {
-            // Arte Tracks
-            if (stringStartsWith(window.location.href, "http://tracks.arte")) {
-                parent = getParent(videoElement, '', "video");
-            }
-            insertAfter(container, parent);
-        }
-    }
-
-        // http://www.arte.tv/arte_vp
-    else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
-        console.log("> Decorating arte_vp");
-        var child = document.getElementById("arte_vp_player_container");
-        child.parentNode.insertBefore(container, child);
-        parent = container;
-    }
-
-        // overlayed player for Arte Cinema or media embedded
-    else if (stringStartsWith(location.href, "http://cinema.arte")
-        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
-
-        console.log("> Decorating overlayed Cinema player");
-        parent = parent.parentNode.parentNode;
-        parent.appendChild(container);
-    }
-
-        // royal slider player
-    else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
-        console.log("> Decorating RoyalSlider player");
-        bRoyalSlider = true;
-
-        // Get the parent with SliderTeaserView type
-        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView" && parent.getAttribute('class') !== 'dnd-drop-wrapper') {
-            parent = parent.parentNode;
-        }
-        insertAfter(container, parent);
-    }
-
-        // regular player
-    else {
-        console.log("> Decorating regular player");
-        if (stringStartsWith(location.href, "http://concert.arte")) {
-            var playerSection = document.querySelector('section#section-player');
-            if (playerSection !== null) {
-                insertAfter(container, playerSection);
-            } else {
-                parent = parent.parentNode;
-                parent.appendChild(container);
-            }
-        } else {
-            parent = parent.parentNode;
-            parent.appendChild(container);
-        }
-    }
-    container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
-    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
-
-    // Create index indicator if Royal Slider
-    if (bRoyalSlider === true) {
-        var indexElement = document.createElement('span');
-        indexElement.innerHTML = "Video " + (videoElementIndex + 1) + " / " + nbVideoPlayers;
-        indexElement.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-        container.appendChild(indexElement);
-    }
-
-    // Create video name + description span
-    var videoNameSpan = document.createElement('span');
-    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + (subtitle !== undefined ? " - " + subtitle : "") + "</strong><br/>";
-    videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-    container.appendChild(videoNameSpan);
-
-    // Create language combobox
-    var languageComboBox = createLanguageComboBox(videoElementIndex)
-    container.appendChild(languageComboBox);
-
-    // Check if there are languages available to select
-    var selectedLanguage;
-    if (languageComboBox.options.length > 0) {
-        selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
-    }
-
-    // Create quality combobox
-    container.appendChild(createQualityComboBox(videoElementIndex));
-
-    // Create download button
-    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage);
-    if (btnDownload !== null) {
-        container.appendChild(btnDownload);
-    }
-
-    // Create metadata button
-    var btnMetadata = createButtonMetadata(videoElementIndex);
-    if (btnMetadata !== null) {
-        container.appendChild(btnMetadata);
-    }
-
-    // Create credits element if not RoyalSlider or if last player from RoyalSlider
-    if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch with javascript XHR requests concurrency
-        var credits = createCreditsElement();
-        parent.appendChild(credits);
     }
 }
 
@@ -664,42 +398,272 @@ function findPlayers() {
     console.log("> Found " + nbVideoPlayers + " video player(s):");
 }
 
-// Returns a struct, given member names
-function makeStruct(membersName) {
-    var members = membersName.split(' ') // members names are separated with spaces
 
-    function constructor() {
-        for (var i = 0; i < members.length; i++) {
 
+/* --- FUNCTIONS: decorating --- */
+function createButtonDownload(videoElementIndex, language) {
+    var button = document.createElement('a');
+    var videoUrl;
+
+    for (q in qualities[videoElementIndex]) {
+        videoUrl = getVideoUrl(videoElementIndex, q, language);
+        if (videoUrl !== '') {
+            quality = q;
+            break;
         }
+    }
+
+    // Check if video exists
+    if (videoUrl === null) {
+        console.log("Could not find video feed");
+        return null;
+    }
+
+    // Check RTMP stream
+    if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // check first because it ends with .mp4 like HTTP
+        button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
+    }
+
+        // Check HTTP
+    else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
+        button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+    }
+
+        // Check HLS stream : should not happen
+    else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
+        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> Apple Quicktime > open HLS stream</a><span class='icomoon-angle-down force-icomoon-font'></span>";
+    }
+
+        // Unknown URL format : should not happen
+    else {
+        console.log('Unknown URL format');
+        return null;
+    }
+
+    button.setAttribute('id', 'btnDownload' + videoElementIndex); // to refer later in select changes
+    button.setAttribute('href', videoUrl);
+    button.setAttribute('target', '_blank');
+    button.setAttribute('download', getVideoName(videoElementIndex) + ".mp4");
+    button.setAttribute('class', 'btn btn-default');
+    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    return button;
+}
+
+function createButtonMetadata(videoElementIndex) {
+    var title = getVideoName(videoElementIndex);
+    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
+    var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
+    var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
+    var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
+
+    // Continue if at least one field is filled
+    if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
+        var button = document.createElement('a');
+        button.setAttribute('class', 'btn btn-default');
+        button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+        button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
+        var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
+        var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
+        button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
+        button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
+        return button;
+    } else {
+        return null;
     }
 }
 
-function init() {
-    playerJson = new Array(nbVideoPlayers);
-    nbVideos = new Array(nbVideoPlayers);
-    nbHTTP = new Array(nbVideoPlayers);
-    nbRTMP = new Array(nbVideoPlayers);
-    nbHLS = new Array(nbVideoPlayers);
-    availableLanguages = new Array(nbVideoPlayers);
-    availableQualities = new Array(nbVideoPlayers);
-    for (i = 0; i < nbVideoPlayers; i++) {
-        playerJson[i] = 0;
-        nbVideos[i] = 0;
-        nbHTTP[i] = 0;
-        nbRTMP[i] = 0;
-        nbHLS[i] = 0;
-        availableLanguages[i] = new Object;
-        // Clone available qualities from base object
-        availableQualities[i] = Object.assign({}, qualityCode);
+function getComboboxSelectedValue(combobox) {
+    var cb = document.getElementById(combobox);
+    return cb[cb.selectedIndex].value;
+}
 
-        // Resets available qualities
-        for (l in availableQualities[i]) {
-            availableQualities[i][l] = 0;
+function createLanguageComboBox(videoElementIndex) {
+    var languageComboBox = document.createElement('select');
+    languageComboBox.setAttribute('id', 'cbLanguage' + videoElementIndex);
+
+    // Associate onchange event with function (bypass for GM)
+    languageComboBox.onchange = function () {
+        var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+        console.log("\n> Language changed to " + selectedLanguage);
+        var btn = document.getElementById('btnDownload' + videoElementIndex);
+        var selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
+        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
+        if (url !== '') {
+            btn.style.visibility = "visible";
+            btn.setAttribute('href', url);
+        } else {
+            btn.style.visibility = "hidden";
+        }
+    };
+
+    // Fill with available languages
+    for (l in languages[videoElementIndex]) {
+        if (languages[videoElementIndex][l] !== 0) {
+            languageComboBox.innerHTML += "<option value='" + l + "'>" + languages[videoElementIndex][l] + "</option>";
+        }
+    }
+    languageComboBox.setAttribute('class', 'btn btn-default');
+    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "max-width: 140px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
+    return languageComboBox;
+}
+
+function createQualityComboBox(videoElementIndex) {
+    var qualityComboBox = document.createElement('select');
+    qualityComboBox.setAttribute('id', 'cbQuality' + videoElementIndex);
+
+    // Associate onchange event with function (bypass for GM)
+    qualityComboBox.onchange = function () {
+        var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
+        console.log("\n> Quality changed to " + selectedQuality);
+        var btn = document.getElementById('btnDownload' + videoElementIndex);
+        var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
+        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
+        if (url !== '') {
+            btn.style.visibility = "visible";
+            btn.setAttribute('href', url);
+        } else {
+            btn.style.visibility = "hidden";
+        }
+    };
+
+    // Fill with available qualities
+    for (q in qualities[videoElementIndex]) {
+        if (qualities[videoElementIndex][q] !== 0) {
+            qualityComboBox.innerHTML += "<option value='" + q + "'>" + qualities[videoElementIndex][q] + "</option>";
+        }
+    }
+    qualityComboBox.setAttribute('class', 'btn btn-default');
+    qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    return qualityComboBox;
+}
+
+function createCreditsElement() {
+    var credits = document.createElement('div');
+    credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love'
+                    + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+    return credits;
+}
+
+function decoratePlayer(videoElement, videoElementIndex) {
+    var parent;
+    var bRoyalSlider = false;
+    var container = document.createElement('div');
+
+    // Look for the parent to decorate
+    parent = videoElement.parentNode;
+
+    // iframe player
+    if (videoElement.nodeName === "IFRAME") {
+        console.log("> Decorating iFrame player");
+
+        // Arte touslesinternets
+        if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
+            parent.insertBefore(container, videoElement);
+        }
+
+        else {
+            // Arte Tracks
+            if (stringStartsWith(window.location.href, "http://tracks.arte")) {
+                parent = getParent(videoElement, '', "video");
+            }
+            insertAfter(container, parent);
         }
     }
 
-    //player.push({ playerJson, })
+        // http://www.arte.tv/arte_vp
+    else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
+        console.log("> Decorating arte_vp");
+        var child = document.getElementById("arte_vp_player_container");
+        child.parentNode.insertBefore(container, child);
+        parent = container;
+    }
+
+        // overlayed player for Arte Cinema or media embedded
+    else if (stringStartsWith(location.href, "http://cinema.arte")
+        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
+
+        console.log("> Decorating overlayed Cinema player");
+        parent = parent.parentNode.parentNode;
+        parent.appendChild(container);
+    }
+
+        // royal slider player
+    else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
+        console.log("> Decorating RoyalSlider player");
+        bRoyalSlider = true;
+
+        // Get the parent with SliderTeaserView type
+        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView" && parent.getAttribute('class') !== 'dnd-drop-wrapper') {
+            parent = parent.parentNode;
+        }
+        insertAfter(container, parent);
+    }
+
+        // regular player
+    else {
+        console.log("> Decorating regular player");
+        if (stringStartsWith(location.href, "http://concert.arte")) {
+            var playerSection = document.querySelector('section#section-player');
+            if (playerSection !== null) {
+                insertAfter(container, playerSection);
+            } else {
+                parent = parent.parentNode;
+                parent.appendChild(container);
+            }
+        } else {
+            parent = parent.parentNode;
+            parent.appendChild(container);
+        }
+    }
+    container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
+    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
+
+    // Create index indicator if Royal Slider
+    if (bRoyalSlider === true) {
+        var indexElement = document.createElement('span');
+        indexElement.innerHTML = "Video " + (videoElementIndex + 1) + " / " + nbVideoPlayers;
+        indexElement.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+        container.appendChild(indexElement);
+    }
+
+    // Create video name + description span
+    var videoNameSpan = document.createElement('span');
+    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
+    videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + (subtitle !== undefined ? " - " + subtitle : "") + "</strong><br/>";
+    videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+    container.appendChild(videoNameSpan);
+
+    // Create language combobox
+    var languageComboBox = createLanguageComboBox(videoElementIndex)
+    container.appendChild(languageComboBox);
+
+    // Check if there are languages available to select
+    var selectedLanguage;
+    if (languageComboBox.options.length > 0) {
+        selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+    }
+
+    // Create quality combobox
+    container.appendChild(createQualityComboBox(videoElementIndex));
+
+    // Create download button
+    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage);
+    if (btnDownload !== null) {
+        container.appendChild(btnDownload);
+    }
+
+    // Create metadata button
+    var btnMetadata = createButtonMetadata(videoElementIndex);
+    if (btnMetadata !== null) {
+        container.appendChild(btnMetadata);
+    }
+
+    // Create credits element if not RoyalSlider or if last player from RoyalSlider
+    if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch with javascript XHR requests concurrency
+        var credits = createCreditsElement();
+        parent.appendChild(credits);
+    }
 }
 
 
@@ -709,9 +673,25 @@ main();
 function main() {
     findPlayers();
     if (nbVideoPlayers > 0) {
-        init();
+        // Init global vars
+        playerJson = new Array(nbVideoPlayers);
+        nbVideos = new Array(nbVideoPlayers);
+        nbHTTP = new Array(nbVideoPlayers);
+        nbRTMP = new Array(nbVideoPlayers);
+        nbHLS = new Array(nbVideoPlayers);
+        languages = new Array(nbVideoPlayers);
+        qualities = new Array(nbVideoPlayers);
+        for (i = 0; i < nbVideoPlayers; i++) {
+            playerJson[i] = 0;
+            nbVideos[i] = 0;
+            nbHTTP[i] = 0;
+            nbRTMP[i] = 0;
+            nbHLS[i] = 0;
+            languages[i] = new Object;
+            qualities[i] = new Object;
+        }
 
-        // Parse each video player
+        // Analyse each video player, then decorate them
         for (var i = 0; i < nbVideoPlayers; i++) {
             findPlayerJson(videoPlayerElements[i], i);
         }
