@@ -30,10 +30,10 @@ var qualities;
 var videoPlayerElements;
 
 var videoPlayerClass = {
-    'general': 'video-container',
-    'live-oembed': 'arte_vp_live-url-oembed',
     'standard': 'arte_vp_url',
     'oembed': 'arte_vp_url_oembed',
+    'general': 'video-container',
+    'live-oembed': 'arte_vp_live-url-oembed',
     'generic': 'data-url',
     'teaser': 'data-teaser-url'
 };
@@ -269,43 +269,44 @@ function findPlayerJson(videoElement, videoElementIndex) {
         if (jsonUrl !== undefined) {
             parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
         } else {
-            // Find the 360 video in the URL
-            console.log("> Searching a 360 video for " + playerUrl);
+            console.log("> Searching a 360 video in: " + playerUrl);
             GM_xmlhttpRequest({
                 method: "GET",
                 url: playerUrl,
                 onload: function (response) {
+
                     var doc = response.responseText;
-                    var xml = doc.split('xml:"')[1].split('"')[0];
+                    var videoName, videoURL;
 
-                    // Get XML
-                    GM_xmlhttpRequest({
-                        method: "GET",
-                        url: playerUrl + xml,
-                        onload: function (response) {
-                            xml = response.responseText;
+                    // new 360 HTML5 player
+                    if (playerUrl.indexOf("arte360") > -1) {
+                        var playerJS = playerUrl.split("?root")[0] + "jsmin/output.min.js?" + doc.split("window.appVersion = \"")[1].split("\"")[0];
+                        console.log("> 360 player JS: " + playerJS);
+                        var root = playerUrl.split("root=")[1].split("&")[0];
+                        videoName = playerUrl.split("video=")[1].split("&")[0];
+                        videoURL = root + "/video/download/4K/" + videoName + "_4K.mp4";
+                        console.log("> Video URL: " + videoURL);
+                        decoratePlayer360(videoElement, videoURL, videoName);
+                    }
 
-                            // Get video URL
-                            var videoName = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
-                            var videoUrl = playerUrl + videoName;
-                            console.log(videoUrl);
+                        // old 360 flash player
+                    else if (playerUrl.indexOf("360FlashPlayers") > -1) {
+                        console.log("> old player");
+                        var xml = doc.split('xml:"')[1].split('"')[0];
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url: playerUrl + xml,
+                            onload: function (response) {
+                                xml = response.responseText;
 
-                            // Decorate
-                            var container = document.createElement('div');
-                            insertAfter(container, videoElement);
-                            container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
-                            container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
-                            var button = document.createElement('a');
-                            button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-                            button.setAttribute('id', 'btnArteDownloader');
-                            button.setAttribute('href', videoUrl);
-                            button.setAttribute('target', '_blank');
-                            button.setAttribute('download', videoName);
-                            button.setAttribute('class', 'btn btn-default');
-                            button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-                            container.appendChild(button);
-                        }
-                    });
+                                // Get video URL
+                                videoName = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
+                                videoURL = playerUrl + videoName;
+                                console.log(videoURL);
+                                decoratePlayer360(videoElement, videoURL, videoName);
+                            }
+                        });
+                    }
                 }
             });
         }
@@ -340,6 +341,7 @@ function findPlayers() {
     for (tag in videoPlayerClass) {
         videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
         if (videoPlayerElements.length > 0) {
+            console.log(videoPlayerClass[tag])
             break;
         }
     }
@@ -349,6 +351,7 @@ function findPlayers() {
         for (tag in videoPlayerClassEmbedded) {
             videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
             if (videoPlayerElements.length > 0) {
+                console.log(tag)
                 break;
             }
         }
@@ -518,6 +521,22 @@ function createCreditsElement() {
     credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love'
                     + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
     return credits;
+}
+
+function decoratePlayer360(videoElement, videoURL, videoName) {
+    var container = document.createElement('div');
+    insertAfter(container, videoElement);
+    container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
+    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
+    var button = document.createElement('a');
+    button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+    button.setAttribute('id', 'btnArteDownloader');
+    button.setAttribute('href', videoURL);
+    button.setAttribute('target', '_blank');
+    button.setAttribute('download', videoName);
+    button.setAttribute('class', 'btn btn-default');
+    button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    container.appendChild(button);
 }
 
 function decoratePlayer(videoElement, videoElementIndex) {
