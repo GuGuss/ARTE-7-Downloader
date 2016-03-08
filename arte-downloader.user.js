@@ -260,7 +260,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
                         console.log("> Video URL: " + videoURL);
                         var subtitlesURL = root + "/subtitles/" + videoName + "_" + getURLParameter(playerUrl, "lang") + ".srt";
                         console.log("> Subtitles URL: " + subtitlesURL);
-                        decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL);
+                        decoratePlayer360(videoElement, videoElementIndex, videoURL, videoName, subtitlesURL);
                     }
 
                         // old 360 flash player
@@ -277,7 +277,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
                                 videoName = xml.split('videourl="%SWFPATH%/')[1].split('"')[0];
                                 videoURL = playerUrl + videoName;
                                 console.log(videoURL);
-                                decoratePlayer360(videoElement, videoURL, videoName);
+                                decoratePlayer360(videoElement, videoElementIndex, videoURL, videoName);
                             }
                         });
                     }
@@ -352,10 +352,21 @@ function findPlayers() {
 
 
 /* --- FUNCTIONS: decorating --- */
-function createButtonDownload(videoElementIndex, language) {
+function createButton(id, url, html) {
     var button = document.createElement('a');
-    var videoUrl;
+    button.setAttribute('id', id); // to refer later in select changes
+    button.setAttribute('href', url);
+    button.setAttribute('target', '_blank');
+    button.setAttribute('class', 'btn btn-default');
+    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    button.innerHTML = html;
+    return button;
+}
 
+function createButtonDownload(videoElementIndex, language) {
+    var videoUrl, html;
+
+    // Fill in with first quality available
     for (q in qualities[videoElementIndex]) {
         videoUrl = getVideoUrl(videoElementIndex, q, language);
         if (videoUrl !== '') {
@@ -372,17 +383,17 @@ function createButtonDownload(videoElementIndex, language) {
 
     // Check RTMP stream
     if (nbRTMP[videoElementIndex] > 0 && videoUrl.substring(0, 7) === "rtmp://") { // check first because it ends with .mp4 like HTTP
-        button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
+        html = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HTTP
     else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
-        button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+        html = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Check HLS stream : should not happen
     else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
-        button.innerHTML = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> Apple Quicktime > open HLS stream</a><span class='icomoon-angle-down force-icomoon-font'></span>";
+        html = "<a href='https://en.wikipedia.org/wiki/HTTP_Live_Streaming'> Apple Quicktime > open HLS stream</a><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
         // Unknown URL format : should not happen
@@ -390,14 +401,7 @@ function createButtonDownload(videoElementIndex, language) {
         console.log('Unknown URL format');
         return null;
     }
-
-    button.setAttribute('id', 'btnDownload' + videoElementIndex); // to refer later in select changes
-    button.setAttribute('href', videoUrl);
-    button.setAttribute('target', '_blank');
-    button.setAttribute('download', getVideoName(videoElementIndex) + ".mp4");
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    return button;
+    return createButton("btnDownload" + videoElementIndex, videoUrl, html);
 }
 
 function createButtonMetadata(videoElementIndex) {
@@ -409,17 +413,13 @@ function createButtonMetadata(videoElementIndex) {
 
     // Continue if at least one field is filled
     if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
-        var button = document.createElement('a');
-        button.setAttribute('class', 'btn btn-default');
-        button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-        button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
         var metadata = (title === undefined ? "" : "[Title]\n" + title)
             + (subtitle === undefined ? "" : "\n\n[Subtitle]\n" + subtitle)
             + (description_short === undefined ? "" : "\n\n[Description-short]\n" + description_short)
             + (description === undefined ? "" : "\n\n[Description]\n" + description)
             + (tags === undefined ? "" : "\n\n[Tags]\n" + tags);
-        var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
-        button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
+        metadata = window.btoa(unescape(encodeURIComponent(metadata)));
+        var button = createButton("btnDescription", "data:application/octet-stream;charset=utf-8;base64," + metadata, "Download description <span class='icomoon-angle-down force-icomoon-font'></span>");
         button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
         return button;
     } else {
@@ -500,30 +500,15 @@ function createCreditsElement() {
     return credits;
 }
 
-function decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL) {
+function decoratePlayer360(videoElement, videoElementIndex, videoURL, videoName, subtitlesURL) {
     var container = document.createElement('div');
     insertAfter(container, videoElement);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
-
-    var btnVideo = document.createElement('a');
-    btnVideo.innerHTML = "<strong>Download video [" + videoName + "] </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-    btnVideo.setAttribute('id', 'btnArteDownloader');
-    btnVideo.setAttribute('href', videoURL);
-    btnVideo.setAttribute('target', '_blank');
-    btnVideo.setAttribute('download', videoName);
-    btnVideo.setAttribute('class', 'btn btn-default');
-    btnVideo.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    container.appendChild(btnVideo);
+    container.appendChild(createButton("btnDownload360_" + videoElementIndex, videoURL, "<strong>Download video [" + videoName + "] </strong><span class='icomoon-angle-down force-icomoon-font'></span>"));
 
     if (subtitlesURL != undefined) {
-        var btnSubtitles = document.createElement('a');
-        btnSubtitles.innerHTML = "<strong>Download subtitles </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-        btnSubtitles.setAttribute('href', subtitlesURL);
-        btnSubtitles.setAttribute('target', '_blank');
-        btnSubtitles.setAttribute('class', 'btn btn-default');
-        btnSubtitles.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-        container.appendChild(btnSubtitles);
+        container.appendChild(createButton("btnDownload360Subtitles_" + videoElementIndex, subtitlesURL, "<strong>Download subtitles </strong><span class='icomoon-angle-down force-icomoon-font'></span>"));
     }
 }
 
