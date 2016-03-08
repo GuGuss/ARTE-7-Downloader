@@ -9,39 +9,12 @@
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
 
-/*
-    @TODO
-    - Arte cinema magazine decoration: http://cinema.arte.tv/fr/magazine/blow-up
-    - Arte cinema: http://cinema.arte.tv/fr
-    - Arte creative decoration: http://creative.arte.tv/fr/starwars-retourenforce
-*/
-
 /* --- GLOBAL VARIABLES --- */
 var scriptVersion = "2.5";
-var player = [];
-var nbVideoPlayers = 0;
-var playerJson;
-var nbVideos;
-var nbHTTP;
-var nbRTMP;
-var nbHLS;
-var languages;
-var qualities;
-var videoPlayerElements;
+var nbVideoPlayers, playerJson, nbVideos, nbHTTP, nbRTMP, nbHLS, languages, qualities, videoPlayerElements;
+var playerAttributes = ["arte_vp_url", "arte_vp_url_oembed", "arte_vp_live-url-oembed", "data-url", "data-teaser-url", "video-container", "embed.embed--delay iframe", "media_embed iframe"];
 
-var videoPlayerClass = {
-    'standard': 'arte_vp_url',
-    'oembed': 'arte_vp_url_oembed',
-    'general': 'video-container',
-    'live-oembed': 'arte_vp_live-url-oembed',
-    'generic': 'data-url',
-    'teaser': 'data-teaser-url'
-};
 
-var videoPlayerClassEmbedded = {
-    'story': 'embed.embed--delay iframe',
-    'embedded': 'media_embed iframe'
-};
 
 /* --- FUNCTIONS: utilities --- */
 function insertAfter(newNode, referenceNode) {
@@ -84,6 +57,10 @@ function getParent(nodeReference, nodeName, classString) {
         }
     }
     return parent;
+}
+
+function getURLParameter(url, name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(url) || [, ""])[1].replace(/\+/g, '%20')) || null;
 }
 
 
@@ -140,16 +117,13 @@ function preParsePlayerJson(videoElementIndex) {
         qualities[videoElementIndex] = temp; // replace with new ordered object
 
         // Display preparse info
-        console.log("\n====================================\n              player #" + videoElementIndex + "\n====================================\n> "
-            + nbVideos[videoElementIndex] + " formats:\n    - "
-            + nbHTTP[videoElementIndex] + " HTTP videos,\n    - "
-            + nbRTMP[videoElementIndex] + " RTMP streams,\n    - "
-            + nbHLS[videoElementIndex] + " HLS streams.");
+        console.log("\n====== player #" + videoElementIndex + " ======\n> "
+            + nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " HTTP videos | " + nbRTMP[videoElementIndex] + " RTMP streams | " + nbHLS[videoElementIndex] + " HLS streams.");
         var languagesFound = "";
         for (l in languages[videoElementIndex]) {
-            languagesFound += "\n    - " + languages[videoElementIndex][l];
+            languagesFound += languages[videoElementIndex][l] + " ";
         }
-        console.log("> Languages:" + languagesFound);
+        console.log("> " + Object.keys(languages[videoElementIndex]).length + " language(s): " + languagesFound);
     }
 }
 
@@ -208,7 +182,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
                     && (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp")
                 ) {
                 var url = video["streamer"] + video["url"];
-                console.log("> " + quality + " RTMP stream: " + url);
+                console.log("> RTMP stream (" + qualities[videoElementIndex][quality] + "): " + url);
                 return url;
             }
         }
@@ -219,7 +193,7 @@ function getVideoUrl(videoElementIndex, quality, language) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if ((video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") && (video["VQU"] === quality || video["quality"] === quality)) {
-                console.log("> HLS stream: " + video["url"]);
+                console.log("> HLS stream (" + qualities[videoElementIndex][quality] + "): " + video["url"]);
                 return video["url"];
             }
         }
@@ -234,15 +208,13 @@ function findPlayerJson(videoElement, videoElementIndex) {
     // Get player URL to find its associated json
     var playerUrl = null;
     var jsonUrl = null;
-    for (key in videoPlayerClass) {
-        playerUrl = videoElement.getAttribute(videoPlayerClass[key]);
-        if (playerUrl !== null) {
-            break;
-        }
+    var tag = 0;
+    for (; tag < playerAttributes.length && playerUrl == null; tag++) {
+        playerUrl = videoElement.getAttribute(playerAttributes[tag]);
     }
 
     // oembed
-    if (playerUrl !== null && (key === "oembed" || (key === "live-oembed"))) {
+    if (playerUrl !== null && (tag == 1 || tag == 2)) {
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
@@ -282,11 +254,13 @@ function findPlayerJson(videoElement, videoElementIndex) {
                     if (playerUrl.indexOf("arte360") > -1) {
                         var playerJS = playerUrl.split("?root")[0] + "jsmin/output.min.js?" + doc.split("window.appVersion = \"")[1].split("\"")[0];
                         console.log("> 360 player JS: " + playerJS);
-                        var root = playerUrl.split("root=")[1].split("&")[0];
-                        videoName = playerUrl.split("video=")[1].split("&")[0];
+                        var root = getURLParameter(playerUrl, "root")
+                        videoName = getURLParameter(playerUrl, "video")
                         videoURL = root + "/video/download/4K/" + videoName + "_4K.mp4";
                         console.log("> Video URL: " + videoURL);
-                        decoratePlayer360(videoElement, videoURL, videoName);
+                        var subtitlesURL = root + "/subtitles/" + videoName + "_" + getURLParameter(playerUrl, "lang") + ".srt";
+                        console.log("> Subtitles URL: " + subtitlesURL);
+                        decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL);
                     }
 
                         // old 360 flash player
@@ -328,7 +302,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
                 if (playerUrl === undefined) { // not found ? Look for playlist file inside the livestream player
                     console.log("Video player URL not available. Fetching livestream player URL");
-                    playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
+                    playerUrl = videoElement.getAttribute(playerAttributes['live']);
                 }
                 parsePlayerJson(playerUrl, videoElement, videoElementIndex);
             }
@@ -337,21 +311,20 @@ function findPlayerJson(videoElement, videoElementIndex) {
 }
 
 function findPlayers() {
-    // Check regular tags
-    for (tag in videoPlayerClass) {
-        videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
-        if (videoPlayerElements.length > 0) {
-            console.log(videoPlayerClass[tag])
+    // Check <div> attributes
+    var i = 0;
+    for (; i < playerAttributes.length - 2; i++) { // fetch without the last 2 embedded iframe attributes
+        videoPlayerElements = document.querySelectorAll("div[" + playerAttributes[i] + "]");
+        if (videoPlayerElements.length != 0) {
             break;
         }
     }
 
-    // Check embedded tags
-    if (videoPlayerElements.length === 0) {
-        for (tag in videoPlayerClassEmbedded) {
-            videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
-            if (videoPlayerElements.length > 0) {
-                console.log(tag)
+    // Fetch with embedded iframe attributes
+    if (videoPlayerElements.length == 0) {
+        for (; i < playerAttributes.length; i++) {
+            videoPlayerElements = document.querySelectorAll("div." + playerAttributes[i]);
+            if (videoPlayerElements.length != 0) {
                 break;
             }
         }
@@ -361,19 +334,19 @@ function findPlayers() {
     if (videoPlayerElements.length === 0) {
         videoPlayerElements = document.querySelectorAll("iframe[arte-video]");
 
-        // Check 360 (no tags yet)
+        // Check 360 (no attributes yet)
         if (videoPlayerElements.length === 0) {
             videoPlayerElements = document.querySelectorAll("iframe");
+
+            // Check arte_vp with no parent frame
+            if (videoPlayerElements.length === 0 && stringStartsWith(unescape(location.href), "http://www.arte.tv/arte_vp/")) {
+                videoPlayerElements = document.querySelectorAll("body");
+            }
         }
     }
 
-    // Check arte_vp with no parent frame
-    if (videoPlayerElements.length === 0 && stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
-        videoPlayerElements = document.querySelectorAll("body");
-    }
-
     nbVideoPlayers = videoPlayerElements.length;
-    console.log("> Found " + nbVideoPlayers + " video player(s):");
+    console.log("> Found " + nbVideoPlayers + " video player" + (nbVideoPlayers > 0 && i <= playerAttributes.length - 1 ? "s with attribute '" + playerAttributes[i] + "'" : "."));
 }
 
 
@@ -440,7 +413,11 @@ function createButtonMetadata(videoElementIndex) {
         button.setAttribute('class', 'btn btn-default');
         button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
         button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
-        var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
+        var metadata = (title === undefined ? "" : "[Title]\n" + title)
+            + (subtitle === undefined ? "" : "\n\n[Subtitle]\n" + subtitle)
+            + (description_short === undefined ? "" : "\n\n[Description-short]\n" + description_short)
+            + (description === undefined ? "" : "\n\n[Description]\n" + description)
+            + (tags === undefined ? "" : "\n\n[Tags]\n" + tags);
         var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
         button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
         button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
@@ -523,20 +500,31 @@ function createCreditsElement() {
     return credits;
 }
 
-function decoratePlayer360(videoElement, videoURL, videoName) {
+function decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL) {
     var container = document.createElement('div');
     insertAfter(container, videoElement);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
-    var button = document.createElement('a');
-    button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-    button.setAttribute('id', 'btnArteDownloader');
-    button.setAttribute('href', videoURL);
-    button.setAttribute('target', '_blank');
-    button.setAttribute('download', videoName);
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    container.appendChild(button);
+
+    var btnVideo = document.createElement('a');
+    btnVideo.innerHTML = "<strong>Download video [" + videoName + "] </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+    btnVideo.setAttribute('id', 'btnArteDownloader');
+    btnVideo.setAttribute('href', videoURL);
+    btnVideo.setAttribute('target', '_blank');
+    btnVideo.setAttribute('download', videoName);
+    btnVideo.setAttribute('class', 'btn btn-default');
+    btnVideo.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    container.appendChild(btnVideo);
+
+    if (subtitlesURL != undefined) {
+        var btnSubtitles = document.createElement('a');
+        btnSubtitles.innerHTML = "<strong>Download subtitles </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+        btnSubtitles.setAttribute('href', subtitlesURL);
+        btnSubtitles.setAttribute('target', '_blank');
+        btnSubtitles.setAttribute('class', 'btn btn-default');
+        btnSubtitles.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+        container.appendChild(btnSubtitles);
+    }
 }
 
 function decoratePlayer(videoElement, videoElementIndex) {
@@ -596,7 +584,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
 
         // regular player
     else {
-        console.log("> Decorating regular player");
+        // Arte Concert
         if (stringStartsWith(location.href, "http://concert.arte")) {
             var playerSection = document.querySelector('section#section-player');
             if (playerSection !== null) {
@@ -605,7 +593,11 @@ function decoratePlayer(videoElement, videoElementIndex) {
                 parent = parent.parentNode;
                 parent.appendChild(container);
             }
-        } else {
+        }
+
+            // regular
+        else {
+            console.log("> Decorating regular player");
             parent = parent.parentNode;
             parent.appendChild(container);
         }
@@ -665,6 +657,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
 /* --- MAIN SCRIPT ENTRY --- */
 main();
 function main() {
+    console.log("\n================================ running Arte-downloader v." + scriptVersion + " ================================");
     findPlayers();
     if (nbVideoPlayers > 0) {
         // Init global vars
@@ -676,13 +669,9 @@ function main() {
         languages = new Array(nbVideoPlayers);
         qualities = new Array(nbVideoPlayers);
         for (i = 0; i < nbVideoPlayers; i++) {
-            playerJson[i] = 0;
-            nbVideos[i] = 0;
-            nbHTTP[i] = 0;
-            nbRTMP[i] = 0;
-            nbHLS[i] = 0;
-            languages[i] = new Object;
+            playerJson[i] = 0, nbVideos[i] = 0, nbHTTP[i] = 0, nbRTMP[i] = 0, nbHLS[i] = 0;
             qualities[i] = new Object;
+            languages[i] = new Object;
         }
 
         // Analyse each video player, then decorate them
