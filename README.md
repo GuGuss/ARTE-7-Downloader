@@ -18,6 +18,7 @@ Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons 
 * **Select** the language version: french, german, english, spanish.
 * **Select** the quality (from 216p up to 720p).
 * **Download** the video or its description.
+  * In Firefox, instead of starting to download the video, it will open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
 
 In case of a livestream, there are 2 possibilities:
 * Download directly the MP4 video.
