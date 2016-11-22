@@ -19,6 +19,7 @@
 var scriptVersion = "2.6";
 var player = [];
 var nbVideoPlayers = 0;
+var is_playlist = false;
 var playerJson;
 var nbVideos;
 var nbHTTP;
@@ -351,43 +352,64 @@ function findPlayerJson(videoElement, videoElementIndex) {
 }
 
 function findPlayers() {
-    // Check regular tags
-    for (tag in videoPlayerClass) {
-        videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
-        if (videoPlayerElements.length > 0) {
-            console.log(videoPlayerClass[tag])
-            break;
-        }
-    }
-
-    // Check embedded tags
-    if (videoPlayerElements.length === 0) {
-        for (tag in videoPlayerClassEmbedded) {
-            videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
+    // Check playlist
+    playlistJson = unescape(window.location.href.split("json_playlist_url=")[1])
+    if (playlistJson !== "undefined") {
+        console.log("> Found playlist json: " + playlistJson)       
+        console.log()
+        videoPlayerElements = parent.document.querySelectorAll("div.arte-playerfs.arte-playerfs--show");
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: playlistJson,
+            onload: function (response) {
+                jsonUrl = JSON.parse(response.responseText)["videos"][0]["jsonUrl"];
+                jsonUrl = jsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
+                if (jsonUrl !== undefined) {
+                    parsePlayerJson(jsonUrl, videoPlayerElements[0], 0);
+                }
+            }
+        });
+        nbVideoPlayers = videoPlayerElements.length;
+        return true;
+    } else {
+        // Check regular tags
+        for (tag in videoPlayerClass) {
+            videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
             if (videoPlayerElements.length > 0) {
-                console.log(tag)
+                console.log(videoPlayerClass[tag])
                 break;
             }
         }
-    }
 
-    // Check iframe
-    if (videoPlayerElements.length === 0) {
-        videoPlayerElements = document.querySelectorAll("iframe[arte-video]");
-
-        // Check 360 (no attributes yet)
+        // Check embedded tags
         if (videoPlayerElements.length === 0) {
-            videoPlayerElements = document.querySelectorAll("iframe");
+            for (tag in videoPlayerClassEmbedded) {
+                videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
+                if (videoPlayerElements.length > 0) {
+                    console.log(tag)
+                    break;
+                }
+            }
         }
-    }
 
-    // Check arte_vp with no parent frame
-    if (videoPlayerElements.length === 0 && stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
-        videoPlayerElements = document.querySelectorAll("body");
-    }
+        // Check iframe
+        if (videoPlayerElements.length === 0) {
+            videoPlayerElements = document.querySelectorAll("iframe[arte-video]");
 
-    nbVideoPlayers = videoPlayerElements.length;
-    console.log("> Found " + nbVideoPlayers + " video player(s):");
+            // Check 360 (no attributes yet)
+            if (videoPlayerElements.length === 0) {
+                videoPlayerElements = document.querySelectorAll("iframe");
+            }
+        }
+
+        // Check arte_vp with no parent frame
+        if (videoPlayerElements.length === 0 && stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
+            videoPlayerElements = document.querySelectorAll("body");
+        }
+
+        nbVideoPlayers = videoPlayerElements.length;
+        return false;
+    }
 }
 
 
@@ -466,6 +488,9 @@ function createButtonMetadata(videoElementIndex) {
 
 function getComboboxSelectedValue(combobox) {
     var cb = document.getElementById(combobox);
+    if (cb == null ) {
+        cb = parent.document.getElementById(combobox);
+    }
     return cb[cb.selectedIndex].value;
 }
 
@@ -508,12 +533,17 @@ function createQualityComboBox(videoElementIndex) {
         var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
         console.log("\n> Quality changed to " + selectedQuality);
         var btn = document.getElementById('btnDownload' + videoElementIndex);
+        if (btn == null) {
+            btn = parent.document.getElementById('btnDownload' + videoElementIndex);
+        }
         var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
+        console.log(selectedLanguage);
         var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
         if (url !== '') {
             btn.style.visibility = "visible";
             btn.setAttribute('href', url);
         } else {
+            console.log("Video not found for these settings!")
             btn.style.visibility = "hidden";
         }
     };
@@ -558,72 +588,82 @@ function decoratePlayer(videoElement, videoElementIndex) {
     var bRoyalSlider = false;
     var container = document.createElement('div');
 
-    // Look for the parent to decorate
-    parent = videoElement.parentNode;
-
-    // iframe player
-    if (videoElement.nodeName === "IFRAME") {
-        console.log("> Decorating iFrame player");
-
-        // Arte touslesinternets
-        if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
-            parent.insertBefore(container, videoElement);
+    if ( is_playlist ) {
+        console.log("> Decorating playlist player")
+        videoElement.insertBefore(container, videoElement.firstChild)
+    } else {
+        // Look for the parent to decorate
+        parent = videoElement.parentNode;
+        
+        if (videoElement.id == "jwPlayerContainer" ) {
+            console.log("> Decorating playlist player");
         }
 
-        else {
-            // Arte Tracks
-            if (stringStartsWith(window.location.href, "http://tracks.arte")) {
-                parent = getParent(videoElement, '', "video");
+        // iframe player
+        else if (videoElement.nodeName === "IFRAME") {
+            console.log("> Decorating iFrame player");
+
+            // Arte touslesinternets
+            if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
+                parent.insertBefore(container, videoElement);
+            }
+
+            else {
+                // Arte Tracks
+                if (stringStartsWith(window.location.href, "http://tracks.arte")) {
+                    parent = getParent(videoElement, '', "video");
+                }
+                insertAfter(container, parent);
+            }
+        }
+
+            // http://www.arte.tv/arte_vp
+        else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
+            console.log("> Decorating arte_vp");
+            var child = document.getElementById("arte_vp_player_container");
+            child.parentNode.insertBefore(container, child);
+            parent = container;
+        }
+
+            // overlayed player for Arte Cinema or media embedded
+        else if (stringStartsWith(location.href, "http://cinema.arte")
+            || (parent.parentNode.getAttribute('id') === "embed_widget")) {
+
+            console.log("> Decorating overlayed Cinema player");
+            parent = parent.parentNode.parentNode;
+            parent.appendChild(container);
+        }
+
+            // royal slider player
+        else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
+            console.log("> Decorating RoyalSlider player");
+            bRoyalSlider = true;
+
+            // Get the parent with SliderTeaserView type
+            while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView" && parent.getAttribute('class') !== 'dnd-drop-wrapper') {
+                parent = parent.parentNode;
             }
             insertAfter(container, parent);
         }
-    }
 
-        // http://www.arte.tv/arte_vp
-    else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
-        console.log("> Decorating arte_vp");
-        var child = document.getElementById("arte_vp_player_container");
-        child.parentNode.insertBefore(container, child);
-        parent = container;
-    }
-
-        // overlayed player for Arte Cinema or media embedded
-    else if (stringStartsWith(location.href, "http://cinema.arte")
-        || (parent.parentNode.getAttribute('id') === "embed_widget")) {
-
-        console.log("> Decorating overlayed Cinema player");
-        parent = parent.parentNode.parentNode;
-        parent.appendChild(container);
-    }
-
-        // royal slider player
-    else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
-        console.log("> Decorating RoyalSlider player");
-        bRoyalSlider = true;
-
-        // Get the parent with SliderTeaserView type
-        while (parent.getAttribute('data-teaser-type') !== "SliderTeaserView" && parent.getAttribute('class') !== 'dnd-drop-wrapper') {
-            parent = parent.parentNode;
-        }
-        insertAfter(container, parent);
-    }
-
-        // regular player
-    else {
-        console.log("> Decorating regular player");
-        if (stringStartsWith(location.href, "http://concert.arte")) {
-            var playerSection = document.querySelector('section#section-player');
-            if (playerSection !== null) {
-                insertAfter(container, playerSection);
+            // regular player
+        else {
+            console.log("> Decorating regular player");
+            if (stringStartsWith(location.href, "http://concert.arte")) {
+                var playerSection = document.querySelector('section#section-player');
+                if (playerSection !== null) {
+                    insertAfter(container, playerSection);
+                } else {
+                    parent = parent.parentNode;
+                    parent.appendChild(container);
+                }
             } else {
                 parent = parent.parentNode;
                 parent.appendChild(container);
             }
-        } else {
-            parent = parent.parentNode;
-            parent.appendChild(container);
         }
     }
+
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
 
@@ -675,8 +715,8 @@ function decoratePlayer(videoElement, videoElementIndex) {
 }
 
 
-
-findPlayers();
+is_playlist = findPlayers();
+console.log("> Found " + nbVideoPlayers + " video player(s):"); 
 if (nbVideoPlayers > 0) {
     // Init global vars
     playerJson = [nbVideoPlayers];
@@ -696,8 +736,10 @@ if (nbVideoPlayers > 0) {
         qualities[i] = new Object;
     }
 
-    // Analyse each video player, then decorate them
-    for (var i = 0; i < nbVideoPlayers; i++) {
-        findPlayerJson(videoPlayerElements[i], i);
+    if (!is_playlist){
+        // Analyse each video player, then decorate them
+        for (var i = 0; i < nbVideoPlayers; i++) {
+            findPlayerJson(videoPlayerElements[i], i);
+        }
     }
 }
