@@ -17,7 +17,8 @@ Go to a video on [Arte website](http://www.arte.tv/) and you should see buttons 
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
-* In Firefox, instead of starting to download the video, it will open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
+
+NB: If your browser open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
 
 For livestreams, you can either:
 * Download directly the MP4 video if available.
