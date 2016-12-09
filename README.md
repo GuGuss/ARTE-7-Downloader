@@ -1,7 +1,7 @@
 ARTE-Downloader
 =================
 
-Current version: **2.5**.
+Current version: **2.6**.
 
 CONTRIBUTORS
 -----------
@@ -11,17 +11,17 @@ CONTRIBUTORS
 DESCRIPTION
 -----------
 
-This script works as a browser extension to download any video on [ARTE website](http://www.arte.tv/).
+This script works as a browser extension to download any video on [Arte website](http://www.arte.tv/).
 
-Go to a video on [ARTE website](http://www.arte.tv/) and you should see buttons under a video:
+Go to a video on [Arte website](http://www.arte.tv/) and you should see buttons under a video:
 
-* **Select** the language version: french, german, english, spanish.
-* **Select** the quality (from 216p up to 720p).
-* **Download** the video or its description.
-  * In Firefox, instead of starting to download the video, it will open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
+* **Select** the language and the quality.
+* **Download** the video and its description.
 
-In case of a livestream, there are 2 possibilities:
-* Download directly the MP4 video.
+NB: If your browser open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
+
+For livestreams, you can either:
+* Download directly the MP4 video if available.
 * Open [VLC](http://www.videolan.org/vlc/) > Open its convert tool (CTRL+R) > Network tab > Copy the link > Convert/Save the video.
 
 ![](http://i.imgur.com/GjvVHLv.jpg)
@@ -42,15 +42,11 @@ FAQ
 ---
 
 **Why should I use this script ?**
-
 If you often travel with poor Internet connections, now you can download videos to watch them later.
 
-**Why www.ARTE.tv ?**
-
+**Why www.arte.tv ?**
 ARTE is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
-
 About ARTE: http://www.arte.tv/sites/en/arte-europe/about/
-
 TV Broadcast: http://reception.arte.tv/
 
 
