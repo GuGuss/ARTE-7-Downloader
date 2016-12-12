@@ -8,13 +8,11 @@
 // @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
-
 /*
     Support:
     - new 360 HTML5 player: http://info.arte.tv/fr/wasala-arriver
     - old 360 flash player: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur
 */
-
 /* --- GLOBAL VARIABLES --- */
 var scriptVersion = "2.6";
 var player = [];
@@ -69,28 +67,26 @@ function getParent(nodeReference, nodeName, classString) {
     // any node
     if (nodeName === '') {
         console.log("> Looking for a parent node with class '" + classString + "'");
-        while (parent.nodeName !== "BODY"
-                && nbNodeIteration < nbNodeIterationMax
-                && hasClass(parent, classString) === false) {
+        while (parent.nodeName !== "BODY" &&
+            nbNodeIteration < nbNodeIterationMax &&
+            hasClass(parent, classString) === false) {
             nbNodeIteration++;
             parent = parent.parentNode;
         }
     }
 
-        // with defined node type
+    // with defined node type
     else {
         console.log("> Looking for a <" + nodeName + " class='" + classString + "'> parent node");
-        while (parent.nodeName !== "BODY"
-                && nbNodeIteration < nbNodeIterationMax
-                && (parent.nodeName !== nodeName.toUpperCase() || hasClass(parent, classString) === false)) {
+        while (parent.nodeName !== "BODY" &&
+            nbNodeIteration < nbNodeIterationMax &&
+            (parent.nodeName !== nodeName.toUpperCase() || hasClass(parent, classString) === false)) {
             nbNodeIteration++;
             parent = parent.parentNode;
         }
     }
     return parent;
 }
-
-
 
 /* --- FUNCTIONS: analysis --- */
 function addLanguage(videoElementIndex, language, wording) {
@@ -117,17 +113,15 @@ function preParsePlayerJson(videoElementIndex) {
             // Check if video format or media type
             if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
                 nbHTTP[videoElementIndex]++;
-            }
-            else if (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp") {
+            } else if (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp") {
                 nbRTMP[videoElementIndex]++;
-            }
-            else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
+            } else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
                 nbHLS[videoElementIndex]++;
             }
 
             addLanguage(videoElementIndex, video["versionCode"], video["versionLibelle"]);
             addQuality(videoElementIndex, (
-                video["VQU"] !== undefined ? video["VQU"] : video["quality"]),
+                    video["VQU"] !== undefined ? video["VQU"] : video["quality"]),
                 video["height"] ? video["height"] + "p@" + video["bitrate"] + "bps" : video["quality"]);
         }
 
@@ -139,9 +133,10 @@ function preParsePlayerJson(videoElementIndex) {
 
         // Reorder qualities
         var sortedKeys = Object.keys(qualities[videoElementIndex]).sort(
-            function (a, b) {
+            function(a, b) {
                 // array of sorted keys
-                return qualities[videoElementIndex][b].split('@')[1].split('b')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('b')[0] * 1; }
+                return qualities[videoElementIndex][b].split('@')[1].split('b')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('b')[0] * 1;
+            }
         );
 
         // Create new object to rearrange qualities according to new key order
@@ -152,8 +147,8 @@ function preParsePlayerJson(videoElementIndex) {
         qualities[videoElementIndex] = temp; // replace with new ordered object
 
         // Display preparse info
-        console.log("\n====== player #" + videoElementIndex + " ======\n> "
-            + nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " HTTP videos | " + nbRTMP[videoElementIndex] + " RTMP streams | " + nbHLS[videoElementIndex] + " HLS streams.");
+        console.log("\n====== player #" + videoElementIndex + " ======\n> " +
+            nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " HTTP videos | " + nbRTMP[videoElementIndex] + " RTMP streams | " + nbHLS[videoElementIndex] + " HLS streams.");
         var languagesFound = "";
         for (l in languages[videoElementIndex]) {
             languagesFound += "\n    - " + languages[videoElementIndex][l];
@@ -167,7 +162,7 @@ function parsePlayerJson(playerJsonUrl, videoElement, videoElementIndex) {
     GM_xmlhttpRequest({
         method: "GET",
         url: playerJsonUrl,
-        onload: function (response) {
+        onload: function(response) {
             playerJson[videoElementIndex] = JSON.parse(response.responseText);
             preParsePlayerJson(videoElementIndex);
             decoratePlayer(videoElement, videoElementIndex);
@@ -199,9 +194,9 @@ function getVideoUrl(videoElementIndex, quality, language) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
 
             // Check language, format, quality
-            if (video["versionCode"] === language
-                && (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4")
-                && (video["VQU"] === quality || video["quality"] === quality)) {
+            if (video["versionCode"] === language &&
+                (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") &&
+                (video["VQU"] === quality || video["quality"] === quality)) {
                 console.log("> " + quality + " MP4 in " + language + ": " + video["url"]);
                 return video["url"];
             }
@@ -212,10 +207,10 @@ function getVideoUrl(videoElementIndex, quality, language) {
     if (nbRTMP[videoElementIndex] > 0) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
-            if ((video["versionCode"] === language || language === undefined)
-                    && (video["VQU"] === quality || video["quality"] === quality)
-                    && (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp")
-                ) {
+            if ((video["versionCode"] === language || language === undefined) &&
+                (video["VQU"] === quality || video["quality"] === quality) &&
+                (video["videoFormat"] === "RMP4" || video["mediaType"] === "rtmp")
+            ) {
                 var url = video["streamer"] + video["url"];
                 console.log("> " + quality + " RTMP stream: " + url);
                 return url;
@@ -228,9 +223,9 @@ function getVideoUrl(videoElementIndex, quality, language) {
         for (var key in videos) {
             var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
             if (
-                (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls")
-                && (video["VQU"] === quality || video["quality"] === quality)
-                && video["versionCode"] === language
+                (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") &&
+                (video["VQU"] === quality || video["quality"] === quality) &&
+                video["versionCode"] === language
             ) {
                 console.log("> HLS stream: " + video["url"]);
                 return video["url"];
@@ -243,7 +238,6 @@ function getVideoUrl(videoElementIndex, quality, language) {
 }
 
 function findPlayerJson(videoElement, videoElementIndex) {
-
     // Get player URL to find its associated json
     var playerUrl = null;
     var jsonUrl = null;
@@ -259,7 +253,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
-            onload: function (response) {
+            onload: function(response) {
                 jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
                 if (jsonUrl !== undefined) {
                     parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
@@ -268,13 +262,13 @@ function findPlayerJson(videoElement, videoElementIndex) {
         });
     }
 
-        // http://www.arte.tv/arte_vp/
+    // http://www.arte.tv/arte_vp/
     else if (stringStartsWith(location.href, "http://www.arte.tv/arte_vp/")) {
         playerUrl = unescape(location.href.split("json_url=")[1]);
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     }
 
-        // iframe embedded media
+    // iframe embedded media
     else if (playerUrl === null) {
         playerUrl = unescape(videoElement.getAttribute('src'));
 
@@ -286,7 +280,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
             GM_xmlhttpRequest({
                 method: "GET",
                 url: playerUrl,
-                onload: function (response) {
+                onload: function(response) {
 
                     var doc = response.responseText;
                     var videoName, videoURL;
@@ -304,14 +298,14 @@ function findPlayerJson(videoElement, videoElementIndex) {
                         decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL);
                     }
 
-                        // old 360 flash player
+                    // old 360 flash player
                     else if (playerUrl.indexOf("360FlashPlayers") > -1) {
                         console.log("> old player");
                         var xml = doc.split('xml:"')[1].split('"')[0];
                         GM_xmlhttpRequest({
                             method: "GET",
                             url: playerUrl + xml,
-                            onload: function (response) {
+                            onload: function(response) {
                                 xml = response.responseText;
 
                                 // Get video URL
@@ -327,17 +321,17 @@ function findPlayerJson(videoElement, videoElementIndex) {
         }
     }
 
-        // Check if player URL is the json
+    // Check if player URL is the json
     else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
         parsePlayerJson(playerUrl, videoElement, videoElementIndex);
     }
 
-        // Look for player URL inside the player json
+    // Look for player URL inside the player json
     else {
         GM_xmlhttpRequest({
             method: "GET",
             url: playerUrl,
-            onload: function (response) {
+            onload: function(response) {
                 var json = JSON.parse(response.responseText);
                 playerUrl = json["videoJsonPlayer"]["videoPlayerUrl"];
 
@@ -355,13 +349,13 @@ function findPlayers() {
     // Check playlist
     playlistJson = unescape(window.location.href.split("json_playlist_url=")[1])
     if (playlistJson !== "undefined") {
-        console.log("> Found playlist json: " + playlistJson)       
+        console.log("> Found playlist json: " + playlistJson)
         console.log()
         videoPlayerElements = parent.document.querySelectorAll("div.arte-playerfs.arte-playerfs--show");
         GM_xmlhttpRequest({
             method: "GET",
             url: playlistJson,
-            onload: function (response) {
+            onload: function(response) {
                 jsonUrl = JSON.parse(response.responseText)["videos"][0]["jsonUrl"];
                 jsonUrl = jsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
                 if (jsonUrl !== undefined) {
@@ -412,8 +406,6 @@ function findPlayers() {
     }
 }
 
-
-
 /* --- FUNCTIONS: decorating --- */
 function createButtonDownload(videoElementIndex, language) {
     var button = document.createElement('a');
@@ -438,17 +430,17 @@ function createButtonDownload(videoElementIndex, language) {
         button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-        // Check HTTP
+    // Check HTTP
     else if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
         button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-        // Check HLS stream : should not happen
+    // Check HLS stream : should not happen
     else if (nbHLS[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 5, videoUrl.length === ".m3u8")) {
         button.innerHTML = "Open <a style='text-decoration: underline;' href='https://www.videolan.org/vlc/'>VLC</a> > CTRL+R > Network > Copy this link > <strong>Convert/Save video.</strong> <span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
-        // Unknown URL format : should not happen
+    // Unknown URL format : should not happen
     else {
         console.log('Unknown URL format');
         return null;
@@ -488,7 +480,7 @@ function createButtonMetadata(videoElementIndex) {
 
 function getComboboxSelectedValue(combobox) {
     var cb = document.getElementById(combobox);
-    if (cb == null ) {
+    if (cb == null) {
         cb = parent.document.getElementById(combobox);
     }
     return cb[cb.selectedIndex].value;
@@ -499,7 +491,7 @@ function createLanguageComboBox(videoElementIndex) {
     languageComboBox.setAttribute('id', 'cbLanguage' + videoElementIndex);
 
     // Associate onchange event with function (bypass for GM)
-    languageComboBox.onchange = function () {
+    languageComboBox.onchange = function() {
         var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
         console.log("\n> Language changed to " + selectedLanguage);
         var btn = document.getElementById('btnDownload' + videoElementIndex);
@@ -529,7 +521,7 @@ function createQualityComboBox(videoElementIndex) {
     qualityComboBox.setAttribute('id', 'cbQuality' + videoElementIndex);
 
     // Associate onchange event with function (bypass for GM)
-    qualityComboBox.onchange = function () {
+    qualityComboBox.onchange = function() {
         var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
         console.log("\n> Quality changed to " + selectedQuality);
         var btn = document.getElementById('btnDownload' + videoElementIndex);
@@ -562,8 +554,8 @@ function createQualityComboBox(videoElementIndex) {
 function createCreditsElement() {
     var credits = document.createElement('div');
     credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
-    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love'
-                    + '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love' +
+        '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
     return credits;
 }
 
@@ -588,14 +580,14 @@ function decoratePlayer(videoElement, videoElementIndex) {
     var bRoyalSlider = false;
     var container = document.createElement('div');
 
-    if ( is_playlist ) {
+    if (is_playlist) {
         console.log("> Decorating playlist player")
         videoElement.insertBefore(container, videoElement.firstChild)
     } else {
         // Look for the parent to decorate
         parent = videoElement.parentNode;
-        
-        if (videoElement.id == "jwPlayerContainer" ) {
+
+        if (videoElement.id == "jwPlayerContainer") {
             console.log("> Decorating playlist player");
         }
 
@@ -606,9 +598,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
             // Arte touslesinternets
             if (stringStartsWith(window.location.href, "http://touslesinternets.arte")) {
                 parent.insertBefore(container, videoElement);
-            }
-
-            else {
+            } else {
                 // Arte Tracks
                 if (stringStartsWith(window.location.href, "http://tracks.arte")) {
                     parent = getParent(videoElement, '', "video");
@@ -617,7 +607,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
             }
         }
 
-            // http://www.arte.tv/arte_vp
+        // http://www.arte.tv/arte_vp
         else if (stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
             console.log("> Decorating arte_vp");
             var child = document.getElementById("arte_vp_player_container");
@@ -625,16 +615,16 @@ function decoratePlayer(videoElement, videoElementIndex) {
             parent = container;
         }
 
-            // overlayed player for Arte Cinema or media embedded
-        else if (stringStartsWith(location.href, "http://cinema.arte")
-            || (parent.parentNode.getAttribute('id') === "embed_widget")) {
+        // overlayed player for Arte Cinema or media embedded
+        else if (stringStartsWith(location.href, "http://cinema.arte") ||
+            (parent.parentNode.getAttribute('id') === "embed_widget")) {
 
             console.log("> Decorating overlayed Cinema player");
             parent = parent.parentNode.parentNode;
             parent.appendChild(container);
         }
 
-            // royal slider player
+        // royal slider player
         else if (stringStartsWith(videoElement.getAttribute('class'), 'rsContent')) {
             console.log("> Decorating RoyalSlider player");
             bRoyalSlider = true;
@@ -646,7 +636,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
             insertAfter(container, parent);
         }
 
-            // regular player
+        // regular player
         else {
             console.log("> Decorating regular player");
             if (stringStartsWith(location.href, "http://concert.arte")) {
@@ -714,9 +704,8 @@ function decoratePlayer(videoElement, videoElementIndex) {
     }
 }
 
-
 is_playlist = findPlayers();
-console.log("> Found " + nbVideoPlayers + " video player(s):"); 
+console.log("> Found " + nbVideoPlayers + " video player(s):");
 if (nbVideoPlayers > 0) {
     // Init global vars
     playerJson = [nbVideoPlayers];
@@ -736,7 +725,7 @@ if (nbVideoPlayers > 0) {
         qualities[i] = new Object;
     }
 
-    if (!is_playlist){
+    if (!is_playlist) {
         // Analyse each video player, then decorate them
         for (var i = 0; i < nbVideoPlayers; i++) {
             findPlayerJson(videoPlayerElements[i], i);
