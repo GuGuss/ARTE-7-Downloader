@@ -356,9 +356,11 @@ function findPlayers() {
             method: "GET",
             url: playlistJson,
             onload: function(response) {
-                jsonUrl = JSON.parse(response.responseText)["videos"][0]["jsonUrl"];
-                jsonUrl = jsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
-                if (jsonUrl !== undefined) {
+                jsonUrl = JSON.parse(response.responseText);
+                //check whether exists a valid entry
+                if(typeof jsonUrl["videos"]!=="undefined" && typeof jsonUrl["videos"][0]!=="undefined") {
+                    jsonUrl = jsonUrl["videos"][0]["jsonUrl"];
+                    jsonUrl = jsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
                     parsePlayerJson(jsonUrl, videoPlayerElements[0], 0);
                 }
             }
