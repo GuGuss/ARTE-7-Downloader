@@ -347,8 +347,9 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
 function findPlayers() {
     // Check playlist
-    playlistJson = unescape(window.location.href.split("json_playlist_url=")[1])
-    if (playlistJson !== "undefined") {
+    playlistJson = /playlist_url=([^&]+)/.exec(window.location.href);
+    if (playlistJson != null) {
+        playlistJson=unescape(playlistJson[1]);
         console.log("> Found playlist json: " + playlistJson)
         console.log()
         videoPlayerElements = parent.document.querySelectorAll("div.arte-playerfs.arte-playerfs--show");
