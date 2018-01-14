@@ -602,6 +602,8 @@ function decoratePlayer(videoElement, videoElementIndex) {
                 // Arte Tracks
                 if (stringStartsWith(window.location.href, "http://tracks.arte")) {
                     parent = getParent(videoElement, '', "video");
+                } else {
+                    parent = document.querySelector('div.video-embed');
                 }
                 insertAfter(container, parent);
             }
