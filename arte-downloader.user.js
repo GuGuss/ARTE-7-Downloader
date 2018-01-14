@@ -159,15 +159,12 @@ function preParsePlayerJson(videoElementIndex) {
 
 function parsePlayerJson(playerJsonUrl, videoElement, videoElementIndex) {
     console.log("    - #" + videoElementIndex + " player JSON: " + playerJsonUrl);
-    GM_xmlhttpRequest({
-        method: "GET",
-        url: playerJsonUrl,
-        onload: function(response) {
-            playerJson[videoElementIndex] = JSON.parse(response.responseText);
-            preParsePlayerJson(videoElementIndex);
-            decoratePlayer(videoElement, videoElementIndex);
-        }
-    });
+    let _cb = (json) => {
+        playerJson[videoElementIndex] = json;
+        preParsePlayerJson(videoElementIndex);
+        decoratePlayer(videoElement, videoElementIndex);
+    };
+    window.fetch(playerJsonUrl).then((resp) => resp.json()).then(_cb);
 }
 
 function getVideoName(videoElementIndex) {
