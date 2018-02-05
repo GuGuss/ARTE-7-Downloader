@@ -1,12 +1,12 @@
 ARTE-Downloader
 =================
 
-Current version: **2.7**.
+Current version: **2.8**.
 
 CONTRIBUTORS
 -----------
 
-[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), @aug-riedinger, @maxlath, @uahim
+[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), @aug-riedinger, @maxlath, @uahim, @walialu
 
 DESCRIPTION
 -----------
