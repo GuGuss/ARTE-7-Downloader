@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     https://*.arte.tv/*
-// @version     2.7
+// @version     2.8
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico
@@ -14,7 +14,7 @@
     - old 360 flash player: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur
 */
 /* --- GLOBAL VARIABLES --- */
-var scriptVersion = "2.6";
+var scriptVersion = "2.8";
 var player = [];
 var nbVideoPlayers = 0;
 var is_playlist = false;
