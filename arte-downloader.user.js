@@ -2,7 +2,7 @@
 // @name        Arte+7 Downloader
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
-// @include     https://*.arte.tv/*
+// @include     *//*.arte.tv/*
 // @version     2.8
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
@@ -604,6 +604,12 @@ function decoratePlayer(videoElement, videoElementIndex) {
                     parent = getParent(videoElement, '', "video");
                 } else {
                     parent = document.querySelector('div.video-embed');
+                    if ( parent == null ) {
+                        parent = document.querySelector('div.article-video');
+                        if ( parent == null ) {
+                            console.log("> ERROR: could not find a parent to decorate.");
+                        }
+                    }
                 }
                 insertAfter(container, parent);
             }
