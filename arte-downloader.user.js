@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.8
+// @version     2.9
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico

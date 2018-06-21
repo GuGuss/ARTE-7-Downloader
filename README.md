@@ -1,7 +1,7 @@
 ARTE-Downloader
 =================
 
-Current version: **2.8**.
+Current version: **2.9**.
 
 CONTRIBUTORS
 -----------
