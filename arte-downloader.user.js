@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.8
+// @version     2.10
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico
@@ -14,7 +14,8 @@
     - old 360 flash player: http://future.arte.tv/fr/5-metres-une-plongee-360deg-sur-votre-ordinateur
 */
 /* --- GLOBAL VARIABLES --- */
-var scriptVersion = "2.8";
+
+var scriptVersion = GM_info.script.version;
 var player = [];
 var nbVideoPlayers = 0;
 var is_playlist = false;
@@ -457,10 +458,10 @@ function createButtonDownload(videoElementIndex, language) {
 
 function createButtonMetadata(videoElementIndex) {
     var title = getVideoName(videoElementIndex);
-    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
-    var description_short = playerJson[videoElementIndex]['videoJsonPlayer']['V7T'];
-    var description = playerJson[videoElementIndex]['videoJsonPlayer']['VDE'];
-    var tags = playerJson[videoElementIndex]['videoJsonPlayer']['VTA'];
+    var subtitle = playerJson[videoElementIndex].videoJsonPlayer.VSU;
+    var description_short = playerJson[videoElementIndex].videoJsonPlayer.V7T;
+    var description = playerJson[videoElementIndex].videoJsonPlayer.VDE;
+    var tags = playerJson[videoElementIndex].videoJsonPlayer.VTA;
 
     // Continue if at least one field is filled
     if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
@@ -506,7 +507,7 @@ function createLanguageComboBox(videoElementIndex) {
     };
 
     // Fill with available languages
-    for (l in languages[videoElementIndex]) {
+    for (var l in languages[videoElementIndex]) {
         if (languages[videoElementIndex][l] !== 0) {
             languageComboBox.innerHTML += "<option value='" + l + "'>" + languages[videoElementIndex][l] + "</option>";
         }
@@ -611,7 +612,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
                         }
                     }
                 }
-                insertAfter(container, parent);
+                 setTimeout(function(){ insertAfter(container, parent); }, 500);
             }
         }
 
