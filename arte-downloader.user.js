@@ -3,7 +3,7 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.11
+// @version     2.11.1
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
@@ -557,9 +557,9 @@ function createQualityComboBox(videoElementIndex) {
 
 function createCreditsElement() {
     var credits = document.createElement('div');
-    credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7")');
+    credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background:#262626');
     credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love' +
-        '<br /><a style=\'color: #020202;\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+        '<br /><a style=\'color:rgb(255, 255, 255);\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
     return credits;
 }
 
@@ -567,7 +567,7 @@ function decoratePlayer360(videoElement, videoURL, videoName) {
     var container = document.createElement('div');
     insertAfter(container, videoElement);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
-    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
+    container.setAttribute('style', 'background:#262626; padding: 10px;');
     var button = document.createElement('a');
     button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     button.setAttribute('id', 'btnArteDownloader');
@@ -667,7 +667,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
     }
 
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
-    container.setAttribute('style', 'background-image:url("data:image/gif;base64,R0lGODlhAwADAIAAAMhFJuFdPiH5BAAAAAAALAAAAAADAAMAAAIERB5mBQA7"); padding: 10px;');
+    container.setAttribute('style', 'background:#262626; padding: 10px;');
 
     // Create index indicator if Royal Slider
     if (bRoyalSlider === true) {
