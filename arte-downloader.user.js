@@ -3,7 +3,8 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.11.1
+// @version     2.11.2
+// @grant       GM.xmlHttpRequest
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
@@ -247,7 +248,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
     // oembed
     if (playerUrl !== null && (key === "oembed" || (key === "live-oembed"))) {
-        GM.xmlhttpRequest({
+        GM.xmlHttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function(response) {
@@ -274,7 +275,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
             parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
         } else {
             console.log("> Searching a 360 video in: " + playerUrl);
-            GM.xmlhttpRequest({
+            GM.xmlHttpRequest({
                 method: "GET",
                 url: playerUrl,
                 onload: function(response) {
@@ -299,7 +300,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
                     else if (playerUrl.indexOf("360FlashPlayers") > -1) {
                         console.log("> old player");
                         var xml = doc.split('xml:"')[1].split('"')[0];
-                        GM.xmlhttpRequest({
+                        GM.xmlHttpRequest({
                             method: "GET",
                             url: playerUrl + xml,
                             onload: function(response) {
@@ -325,7 +326,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
     // Look for player URL inside the player json
     else {
-        GM.xmlhttpRequest({
+        GM.xmlHttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function(response) {
@@ -350,7 +351,7 @@ function findPlayers() {
         console.log("> Found playlist json: " + playlistJson)
         console.log()
         videoPlayerElements = parent.document.querySelectorAll("div.arte-playerfs.arte-playerfs--show");
-        GM.xmlhttpRequest({
+        GM.xmlHttpRequest({
             method: "GET",
             url: playlistJson,
             onload: function(response) {
