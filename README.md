@@ -1,7 +1,7 @@
 ARTE-Downloader
 =================
 
-Current version: **2.10**.
+Current version: **2.11**.
 
 CONTRIBUTORS
 -----------
@@ -29,14 +29,12 @@ For livestreams, you can either:
 INSTALLATION
 ------------
 ### Step 1 : Install a script manager
-* [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) script manager.
-* [Chrome users] Install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) script manager.
-* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) script manager.
+* [Firefox] [Tampermonkey](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) or [Greasemonkey](https://addons.mozilla.org/en-GB/firefox/addon/greasemonkey/) or [Violentmonkey](https://addons.mozilla.org/en-US/firefox/addon/violentmonkey/).
+* [Chromium(Chrome/Vivaldi/Brave)] [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag).
+* [Opera] [Tampermonkey-beta](https://addons.opera.com/en/extensions/details/tampermonkey-beta/).
 
 ### Step 2 : Install the script
-* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install* and you're all set!
-
-**Note** To get the latest version: either update through your script manager, or redo step 2 ;-)
+* Open [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install/Reinstall* and you're all set!
 
 FAQ
 ---
