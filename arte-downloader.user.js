@@ -3,9 +3,8 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.10
+// @version     2.11
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
-// @grant       GM_xmlhttpRequest
 // @icon        http://www.arte.tv/favicon.ico
 // ==/UserScript==
 /*
@@ -61,7 +60,7 @@ function hasClass(element, cls) {
 
 // Get a parent node of the chosen type and class
 function getParent(nodeReference, nodeName, classString) {
-    var parent = node;
+    var parent = nodeReference;
     var nbNodeIteration = 0;
     var nbNodeIterationMax = 10;
 
@@ -248,7 +247,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
     // oembed
     if (playerUrl !== null && (key === "oembed" || (key === "live-oembed"))) {
-        GM_xmlhttpRequest({
+        GM.xmlhttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function(response) {
@@ -275,7 +274,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
             parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
         } else {
             console.log("> Searching a 360 video in: " + playerUrl);
-            GM_xmlhttpRequest({
+            GM.xmlhttpRequest({
                 method: "GET",
                 url: playerUrl,
                 onload: function(response) {
@@ -300,7 +299,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
                     else if (playerUrl.indexOf("360FlashPlayers") > -1) {
                         console.log("> old player");
                         var xml = doc.split('xml:"')[1].split('"')[0];
-                        GM_xmlhttpRequest({
+                        GM.xmlhttpRequest({
                             method: "GET",
                             url: playerUrl + xml,
                             onload: function(response) {
@@ -326,7 +325,7 @@ function findPlayerJson(videoElement, videoElementIndex) {
 
     // Look for player URL inside the player json
     else {
-        GM_xmlhttpRequest({
+        GM.xmlhttpRequest({
             method: "GET",
             url: playerUrl,
             onload: function(response) {
@@ -351,7 +350,7 @@ function findPlayers() {
         console.log("> Found playlist json: " + playlistJson)
         console.log()
         videoPlayerElements = parent.document.querySelectorAll("div.arte-playerfs.arte-playerfs--show");
-        GM_xmlhttpRequest({
+        GM.xmlhttpRequest({
             method: "GET",
             url: playlistJson,
             onload: function(response) {
@@ -469,7 +468,11 @@ function createButtonMetadata(videoElementIndex) {
         button.setAttribute('class', 'btn btn-default');
         button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
         button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
-        var metadata = "[Title]\n" + title + "\n\n[Subtitle]\n" + subtitle + "\n\n[Description-short]\n" + description_short + "\n\n[Description]\n" + description + "\n\n[Tags]\n" + tags;
+        var metadata = (title !== undefined ? "[Title]\n" + title:'')
+            + (subtitle !== undefined ? "\n\n[Subtitle]\n" + subtitle:'')
+            + (description_short !== undefined ? "\n\n[Description-short]\n" + description_short:'')
+            + (description !== undefined ? "\n\n[Description]\n" + description:'')
+            + (tags !== undefined ? "\n\n[Tags]\n" + tags:'');
         var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
         button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
         button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
@@ -612,7 +615,7 @@ function decoratePlayer(videoElement, videoElementIndex) {
                         }
                     }
                 }
-                 setTimeout(function(){ insertAfter(container, parent); }, 500);
+                 setTimeout(function(){ insertAfter(container, parent); }, 2000);
             }
         }
 
@@ -674,11 +677,11 @@ function decoratePlayer(videoElement, videoElementIndex) {
         container.appendChild(indexElement);
     }
 
-    // Create video name + description span
+    // Create video name span
     var videoNameSpan = document.createElement('span');
-    var subtitle = playerJson[videoElementIndex]['videoJsonPlayer']['VSU'];
+    var subtitle = playerJson[videoElementIndex].videoJsonPlayer.VSU;
     videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + (subtitle !== undefined ? " - " + subtitle : "") + "</strong><br/>";
-    videoNameSpan.setAttribute('style', 'margin:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
+    videoNameSpan.setAttribute('style', 'margin-top:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 16px;');
     container.appendChild(videoNameSpan);
 
     // Create language combobox
@@ -709,8 +712,12 @@ function decoratePlayer(videoElement, videoElementIndex) {
     // Create credits element if not RoyalSlider or if last player from RoyalSlider
     if (bRoyalSlider === false || videoElementIndex === nbVideoPlayers - 1) { // glitch with javascript XHR requests concurrency
         var credits = createCreditsElement();
-        parent.appendChild(credits);
+        container.appendChild(credits);
     }
+
+    // Workaround decoration overlapping next SECTION
+    var parentSection = getParent(parent, 'SECTION', 'margin-bottom-s');
+    parentSection.style.marginBottom = "9rem";
 }
 
 is_playlist = findPlayers();
