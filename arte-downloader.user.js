@@ -602,6 +602,10 @@ function decoratePlayer(videoElement, videoElementIndex) {
         container.appendChild(btnMetadata);
     }
 
+    // Create credits ribbon
+    var credits = createCreditsElement();
+    container.appendChild(credits);
+
     // Workaround decoration overlapping next SECTION
     var parentSection = getParent(parent, 'SECTION', 'margin-bottom-s');
     parentSection.style.marginBottom = "9rem";
