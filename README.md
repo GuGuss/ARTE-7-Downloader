@@ -16,7 +16,7 @@ This script works as a browser extension to offer download options under videos 
 * **Select** the language and the quality.
 * **Download** the video and its description.
 
-NB: If your browser open the MP4 video in a new tab: save it with CTRL+S.
+NB: If your browser opens the video in a new tab: save it with CTRL+S.
 
 ![](https://i.imgur.com/GjvVHLv.jpg)
 
