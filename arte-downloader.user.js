@@ -3,42 +3,25 @@
 // @namespace   GuGuss
 // @description Download videos or get stream link of ARTE programs in the selected language.
 // @include     *//*.arte.tv/*
-// @version     2.12
+// @version     3.0
 // @grant       GM.xmlHttpRequest
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
-// @icon        http://www.arte.tv/favicon.ico
+// @icon        https://www.arte.tv/favicon.ico
 // ==/UserScript==
 /*
     Support:
-    - 360 HTML5 player: http://info.arte.tv/fr/wasala-arriver
+    - 360 HTML5 player: https://info.arte.tv/fr/wasala-arriver
 */
 /* --- GLOBAL VARIABLES --- */
 
-var scriptVersion = GM_info.script.version;
-var player = [];
-var nbVideoPlayers = 0;
-var is_playlist = false;
-var playerJson;
-var nbVideos;
-var nbHTTP;
-var nbHLS;
-var languages;
-var qualities;
-var videoPlayerElements;
+let scriptVersion = GM_info.script.version;
+let playerJson;
+let nbVideos;
+let nbHTTP;
+let nbHLS;
+let languages;
+let qualities;
 
-var videoPlayerClass = {
-    'standard': 'arte_vp_url',
-    'oembed': 'arte_vp_url_oembed',
-    'general': 'video-container',
-    'live-oembed': 'arte_vp_live-url-oembed',
-    'generic': 'data-url',
-    'teaser': 'data-teaser-url'
-};
-
-var videoPlayerClassEmbedded = {
-    'story': 'embed.embed--delay iframe',
-    'embedded': 'media_embed iframe'
-};
 
 /* --- FUNCTIONS: utilities --- */
 function getURLParameter(url, name) {
@@ -46,7 +29,11 @@ function getURLParameter(url, name) {
 }
 
 function insertAfter(newNode, referenceNode) {
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    if (referenceNode.parentNode == null) {
+        referenceNode.insertBefore(newNode, referenceNode.nextSibling);
+    } else {
+        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    }
 }
 
 function stringStartsWith(string, prefix) {
@@ -59,13 +46,12 @@ function hasClass(element, cls) {
 
 // Get a parent node of the chosen type and class
 function getParent(nodeReference, nodeName, classString) {
-    var parent = nodeReference;
-    var nbNodeIteration = 0;
-    var nbNodeIterationMax = 10;
+    let parent = nodeReference;
+    let nbNodeIteration = 0;
+    let nbNodeIterationMax = 10;
 
     // any node
     if (nodeName === '') {
-        console.log("> Looking for a parent node with class '" + classString + "'");
         while (parent.nodeName !== "BODY" &&
             nbNodeIteration < nbNodeIterationMax &&
             hasClass(parent, classString) === false) {
@@ -78,8 +64,9 @@ function getParent(nodeReference, nodeName, classString) {
     else {
         console.log("> Looking for a <" + nodeName + " class='" + classString + "'> parent node");
         while (parent.nodeName !== "BODY" &&
-            nbNodeIteration < nbNodeIterationMax &&
-            (parent.nodeName !== nodeName.toUpperCase() || hasClass(parent, classString) === false)) {
+               parent.parentNode !== null &&
+               nbNodeIteration < nbNodeIterationMax &&
+               (parent.nodeName !== nodeName.toUpperCase() || hasClass(parent, classString) === false)) {
             nbNodeIteration++;
             parent = parent.parentNode;
         }
@@ -102,52 +89,55 @@ function addQuality(videoElementIndex, quality, wording) {
 
 function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
-        var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
+        let videos = Object.keys(playerJson[videoElementIndex].videoJsonPlayer.VSR);
         nbVideos[videoElementIndex] = videos.length;
 
         // Loop through all videos URLs.
-        for (var key in videos) {
-            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
+        for (let key in videos) {
+            let video = playerJson[videoElementIndex].videoJsonPlayer.VSR[videos[key]];
 
             // Check if video format or media type
-            if (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") {
+            if (video.videoFormat === "HBBTV" || video.mediaType === "mp4") {
                 nbHTTP[videoElementIndex]++;
-            } else if (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") {
+            } else if (video.videoFormat === "M3U8" || video.mediaType === "hls") {
                 nbHLS[videoElementIndex]++;
             }
 
-            addLanguage(videoElementIndex, video["versionCode"], video["versionLibelle"]);
+            addLanguage(videoElementIndex, video.versionCode, video.versionLibelle);
             addQuality(videoElementIndex, (
-                    video["VQU"] !== undefined ? video["VQU"] : video["quality"]),
-                video["height"] ? video["height"] + "p@" + video["bitrate"] + "bps" : video["quality"]);
+                video.VQU !== undefined ? video.VQU : video.quality),
+                video.height ? video.height
+                    + "p@" + Math.round(video.bitrate /1000*10) /10 + "Mbps (" // convert kbps > Mbps
+                    + Math.round(video.bitrate *1000/8/1024) + "kB/s)"         // convert kbps > kB/s
+                    : video.quality);
         }
 
         // Remove Apple HLS if HTTP available
         if (nbHTTP[videoElementIndex] > 0) {
-            delete qualities[videoElementIndex]["XS"];
-            delete qualities[videoElementIndex]["XQ"];
+            delete qualities[videoElementIndex].XS;
+            delete qualities[videoElementIndex].XQ;
         }
 
         // Reorder qualities
-        var sortedKeys = Object.keys(qualities[videoElementIndex]).sort(
+        let sortedKeys = Object.keys(qualities[videoElementIndex]).sort(
             function(a, b) {
                 // array of sorted keys
-                return qualities[videoElementIndex][b].split('@')[1].split('b')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('b')[0] * 1;
+                return qualities[videoElementIndex][b].split('@')[1].split('M')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('M')[0] * 1;
             }
         );
 
         // Create new object to rearrange qualities according to new key order
-        var temp = new Object;
-        for (var i = 0; i < sortedKeys.length; i++) {
+        let temp = new Object;
+        for (let i = 0; i < sortedKeys.length; i++) {
             temp[sortedKeys[i]] = qualities[videoElementIndex][sortedKeys[i]];
         }
         qualities[videoElementIndex] = temp; // replace with new ordered object
 
         // Display preparse info
-        console.log("\n====== player #" + videoElementIndex + " ======\n> " +
+        console.log("\n====== player #" + videoElementIndex+1 + " ======\n> " +
             nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " MP4 videos | " + nbHLS[videoElementIndex] + " streams.");
-        var languagesFound = "";
-        for (l in languages[videoElementIndex]) {
+        let languagesFound = "";
+        for (let l in languages[videoElementIndex]) {
             languagesFound += "\n    - " + languages[videoElementIndex][l];
         }
         console.log("> Languages:" + languagesFound);
@@ -165,9 +155,9 @@ function parsePlayerJson(playerJsonUrl, videoElement, videoElementIndex) {
 }
 
 function getVideoName(videoElementIndex) {
-    var name = playerJson[videoElementIndex]['videoJsonPlayer']['VTI'];
+    let name = playerJson[videoElementIndex].videoJsonPlayer.VTI;
     if (name === null) {
-        name = playerJson[videoElementIndex]['videoJsonPlayer']['VST']['VNA'];
+        name = playerJson[videoElementIndex].videoJsonPlayer.VST.VNA;
         if (name === null) {
             return "undefined";
         }
@@ -178,36 +168,36 @@ function getVideoName(videoElementIndex) {
 
 function getVideoUrl(videoElementIndex, quality, language) {
     // Get videos object
-    var videos = Object.keys(playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"]);
+    let videos = Object.keys(playerJson[videoElementIndex].videoJsonPlayer.VSR);
 
     // Check if there are HTTP videos
     if (nbHTTP[videoElementIndex] > 0) {
 
         // Loop through all videos URLs.
-        for (var key in videos) {
-            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
+        for (let key in videos) {
+            let video = playerJson[videoElementIndex].videoJsonPlayer.VSR[videos[key]];
 
             // Check language, format, quality
-            if (video["versionCode"] === language &&
-                (video["videoFormat"] === "HBBTV" || video["mediaType"] === "mp4") &&
-                (video["VQU"] === quality || video["quality"] === quality)) {
-                console.log("> " + quality + " MP4 in " + language + ": " + video["url"]);
-                return video["url"];
+            if (video.versionCode === language &&
+                (video.videoFormat === "HBBTV" || video.mediaType === "mp4") &&
+                (video.VQU === quality || video.quality === quality)) {
+                console.log("> " + quality + " MP4 in " + language + ": " + video.url);
+                return video.url;
             }
         }
     }
 
     // Search HLS streams
     if (nbHLS[videoElementIndex] > 0) {
-        for (var key in videos) {
-            var video = playerJson[videoElementIndex]["videoJsonPlayer"]["VSR"][videos[key]];
+        for(let key in videos) {
+            let video = playerJson[videoElementIndex].videoJsonPlayer.VSR[videos[key]];
             if (
-                (video["videoFormat"] === "M3U8" || video["mediaType"] === "hls") &&
-                (video["VQU"] === quality || video["quality"] === quality) &&
-                video["versionCode"] === language
+                (video.videoFormat === "M3U8" || video.mediaType === "hls") &&
+                (video.VQU === quality || video.quality === quality) &&
+                video.versionCode === language
             ) {
-                console.log("> HLS stream: " + video["url"]);
-                return video["url"];
+                console.log("> HLS stream: " + video.url);
+                return video.url;
             }
         }
     }
@@ -218,37 +208,11 @@ function getVideoUrl(videoElementIndex, quality, language) {
 
 function findPlayerJson(videoElement, videoElementIndex) {
     // Get player URL to find its associated json
-    var playerUrl = null;
-    var jsonUrl = null;
-    for (var key in videoPlayerClass) {
-        playerUrl = videoElement.getAttribute(videoPlayerClass[key]);
-        if (playerUrl !== null) {
-            break;
-        }
-    }
-
-    // oembed
-    if (playerUrl !== null && (key === "oembed" || (key === "live-oembed"))) {
-        GM.xmlHttpRequest({
-            method: "GET",
-            url: playerUrl,
-            onload: function(response) {
-                jsonUrl = unescape(response.responseText.split("json_url=")[1].split('"')[0]);
-                if (jsonUrl !== undefined) {
-                    parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
-                }
-            }
-        });
-    }
-
-    // http://www.arte.tv/arte_vp/
-    else if (stringStartsWith(location.href, "http://www.arte.tv/arte_vp/")) {
-        playerUrl = unescape(location.href.split("json_url=")[1]);
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    }
+    let playerUrl = null;
+    let jsonUrl = null;
 
     // iframe embedded media
-    else if (playerUrl === null) {
+    if (playerUrl === null) {
         playerUrl = unescape(videoElement.getAttribute('src'));
         jsonUrl = playerUrl.split('json_url=')[1];
         if (jsonUrl == undefined) {
@@ -264,12 +228,9 @@ function findPlayerJson(videoElement, videoElementIndex) {
             GM.xmlHttpRequest({
                 method: "GET",
                 url: playerUrl,
-                onload: function(response) {
-
+                onload: response => {
                     var doc = response.responseText;
                     var videoName, videoURL;
-
-                    // 360 HTML5 player
                     if (playerUrl.indexOf("arte360") > -1) {
                         var playerJS = playerUrl.split("?root")[0] + "jsmin/output.min.js?" + doc.split("window.appVersion = \"")[1].split("\"")[0];
                         console.log("> 360 player JS: " + playerJS);
@@ -296,94 +257,171 @@ function findPlayerJson(videoElement, videoElementIndex) {
         GM.xmlHttpRequest({
             method: "GET",
             url: playerUrl,
-            onload: function(response) {
-                var json = JSON.parse(response.responseText);
+            onload: response => {
+                let json = JSON.parse(response.responseText);
                 playerUrl = json["videoJsonPlayer.videoPlayerUrl"];
-
-                // not found ? Look for playlist file inside the livestream player
-                if (playerUrl === undefined) {
-                    console.log("Video player URL not available. Fetching livestream player URL");
-                    playerUrl = videoElement.getAttribute(videoPlayerClass['live']);
-                }
                 if (playerUrl !== undefined) {
                     parsePlayerJson(playerUrl, videoElement, videoElementIndex);
                 } else {
-                    console.log("Couldn't find a player URL.");
+                    console.error("Couldn't find a player URL.");
                 }
             }
         });
     }
 }
 
-function findPlayers() {
+function initParsingSystem(nbVideoPlayers) {
+    if (nbVideoPlayers > 0) {
+        console.log("> Found " + nbVideoPlayers + " video player" + (nbVideoPlayers > 1 ? 's':''));
+        playerJson = [nbVideoPlayers];
+        nbVideos = [nbVideoPlayers];
+        nbHTTP = [nbVideoPlayers];
+        nbHLS = [nbVideoPlayers];
+        languages = [nbVideoPlayers];
+        qualities = [nbVideoPlayers];
+        for (let i = 0; i < nbVideoPlayers; i++) {
+            playerJson[i] = 0;
+            nbVideos[i] = 0;
+            nbHTTP[i] = 0;
+            nbHLS[i] = 0;
+            languages[i] = new Object;
+            qualities[i] = new Object;
+        }
+    }
+}
+
+/*
+===========
+ENTRY POINT
+===========
+*/
+(function findPlayers() {
+    console.log('\n===== ARTE DOWNLOADER v' + scriptVersion + ' started =====');
+    // Look up inline scripts to find highlight of the day playlist
+    /*let scripts = document.querySelectorAll("script");
+    if (scripts !== undefined) {
+        let matchStringStart = "window.__INITIAL_STATE__ = ";
+        let matchStringEnd = "}}}}";
+        for(let i=0; i < scripts.length; i++) {
+            let str = scripts[i].innerHTML.trim();
+            if (str.startsWith(matchStringStart)) {
+                str = str.split(matchStringStart)[1].split(matchStringEnd)[0] + matchStringEnd;
+                let inlineJson = JSON.parse(str);
+                inlineJson = inlineJson.pages.list["LIVE_fr_{}"].zones;
+                if (inlineJson[0].code.name == "today_guide_LIVE") {
+                    inlineJson = inlineJson[0].data;
+                    console.log(inlineJson);
+                }
+            }
+        }
+    }*/
+
     // Check playlist
-    var playlistJson = /playlist_url=([^&]+)/.exec(window.location.href);
+    let playlistJson = /playlist_url=([^&]+)/.exec(window.location.href);
     if (playlistJson != null) {
-        playlistJson=unescape(playlistJson[1]);
+        playlistJson = unescape(playlistJson[1]);
         console.log("> Found playlist json: " + playlistJson);
-        videoPlayerElements = document.childNodes;
-        GM.xmlHttpRequest({
-            method: "GET",
-            url: playlistJson,
-            onload: function(response) {
-                var jsonUrl = JSON.parse(response.responseText);
-                //check whether exists a valid entry
-                if(typeof jsonUrl["videos"]!=="undefined" && typeof jsonUrl["videos"][0]!=="undefined") {
-                    jsonUrl = jsonUrl["videos"][0]["jsonUrl"];
-                    jsonUrl = jsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
-                    parsePlayerJson(jsonUrl, videoPlayerElements[0], 0);
+
+        // Fetch playlist json
+        window.fetch(playlistJson).then(resp => resp.json()).then( jsonUrl => {
+            // Check for valid entry
+            if(typeof jsonUrl.videos !== "undefined" && typeof jsonUrl.videos[0] !== "undefined") {
+                let total = jsonUrl.videos.length;
+                initParsingSystem(total);
+                for (let i = 0; i < total; i++) {
+                    let videoJsonUrl = jsonUrl.videos[i].jsonUrl;
+                    videoJsonUrl = videoJsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
+                    parsePlayerJson(videoJsonUrl, document, i); // document shall be the inner player iframe
                 }
+
+                // Wait recursively for each video downloaders to be created
+                let playlistSelector;
+                (function fetchDownloaders (i) {
+                    let videoDownloaders;
+                    setTimeout( () => {
+                        videoDownloaders = parent.document.querySelectorAll('div[id^=video_]');
+
+                        // when each have been created
+                        if (videoDownloaders.length == total) {
+
+                            // Create a playlist selector
+                            console.log("\n===== PLAYLIST ======");
+                            console.log("> Creating playlist selector.");
+                            let container = document.createElement('div');
+                            let span = document.createElement('span');
+                            span.innerHTML = '<strong>Select video to download</strong>';
+                            span.setAttribute('style', "margin-top: 10px; padding: 10px; max-width: 720px; color:white; font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 16px;");
+                            container.appendChild(span);
+                            let cbVideoSelector = document.createElement('select');
+                            container.appendChild(cbVideoSelector);
+                            cbVideoSelector.setAttribute('id', 'playlistSelector');
+                            cbVideoSelector.setAttribute('style', "margin-top: 10px; padding: 10px; max-width: 720px;");
+                            cbVideoSelector.onchange = () => {
+                                // hide others
+                                parent.document.querySelectorAll('div[id^=video_]').forEach( el => {
+                                    el.style.visibility = "hidden";
+                                    el.style.height = "0px";
+                                    el.style.padding = "0px";
+                                    el.style.margin = "0px";
+                                    el.style.lineHeight = "0px";
+                                    el.style.visibility = "hidden"
+                                });
+
+                                let selection = cbVideoSelector.options[cbVideoSelector.selectedIndex].value;
+                                let downloader = parent.document.getElementById(selection);
+                                downloader.style.visibility = "visible";
+                                downloader.style.height = "7rem";
+                                downloader.style.padding = "10px";
+                                downloader.style.margin = "10px";
+                                downloader.style.lineHeight = "1.5";
+                                insertAfter(downloader, cbVideoSelector);
+                                console.log("> Selected downloader for " + selection);
+                            };
+
+                            // Hide each downloader to only display the current selected by the playlist selector
+                            videoDownloaders.forEach( (el, i) => {
+                                el.style.visibility = "hidden";
+                                el.style.height = "0px";
+                                el.style.padding = "0px";
+                                el.style.margin = "0px";
+                                el.style.lineHeight = "0px";
+                                el.style.visibility = "hidden"
+                                let id = "video_" + i;
+                                cbVideoSelector.innerHTML += "<option value='" + id + "'>" + parent.document.getElementById(id).firstChild.firstChild.innerHTML + "</option>";
+                            });
+                            videoDownloaders[0].parentNode.insertBefore(container, videoDownloaders[0]);
+                        } else {
+                            if (--i) {
+                                fetchDownloaders(i);
+                            } else {
+                                console.log("===== PLAYLIST ======");
+                                if (videoDownloaders.length !== total) {
+                                    console.warn("Not every video downloaders were created: " + videoDownloaders.length + "/" + total);
+                                }
+                            }
+                        }
+                    }, 1000)
+                })(10);
             }
         });
-        nbVideoPlayers = videoPlayerElements.length;
-        return true;
-    } else {
-        // Check regular tags
-        for (var tag in videoPlayerClass) {
-            videoPlayerElements = document.querySelectorAll("div[" + videoPlayerClass[tag] + "]");
-            if (videoPlayerElements.length > 0) {
-                console.log(videoPlayerClass[tag])
-                break;
-            }
-        }
-
-        // Check embedded tags
-        if (videoPlayerElements.length === 0) {
-            for (tag in videoPlayerClassEmbedded) {
-                videoPlayerElements = document.querySelectorAll("div." + videoPlayerClassEmbedded[tag]);
-                if (videoPlayerElements.length > 0) {
-                    console.log(tag)
-                    break;
-                }
-            }
-        }
-
-        // Check iframe
-        if (videoPlayerElements.length === 0) {
-            videoPlayerElements = document.querySelectorAll("iframe[arte-video]");
-
-            // Check 360 (no attributes yet)
-            if (videoPlayerElements.length === 0) {
-                videoPlayerElements = document.querySelectorAll("iframe");
-            }
-        }
-
-        // Check arte_vp with no parent frame
-        if (videoPlayerElements.length === 0 && stringStartsWith(unescape(top.location), "http://www.arte.tv/arte_vp/")) {
-            videoPlayerElements = document.querySelectorAll("body");
-        }
-
-        nbVideoPlayers = videoPlayerElements.length;
-        return false;
     }
-}
+
+    // else deal w/ single video players
+    else {
+        let playerIframes = document.querySelectorAll("iframe");
+        initParsingSystem(playerIframes.length);
+        for (let i = 0; i < playerIframes.length; i++) {
+            findPlayerJson(playerIframes[i], i);
+        }
+    }
+})();
 
 /* --- FUNCTIONS: decorating --- */
 function createButtonDownload(videoElementIndex, language) {
-    var button = document.createElement('a');
-    var videoUrl;
+    let button = document.createElement('a');
+    let videoUrl;
 
-    for (var q in qualities[videoElementIndex]) {
+    for (let q in qualities[videoElementIndex]) {
         videoUrl = getVideoUrl(videoElementIndex, q, language);
         if (videoUrl !== '') {
             break;
@@ -408,7 +446,7 @@ function createButtonDownload(videoElementIndex, language) {
 
     // Unknown URL format : should not happen
     else {
-        console.log('Unknown URL format');
+        console.error('Unknown URL format');
         return null;
     }
 
@@ -422,24 +460,24 @@ function createButtonDownload(videoElementIndex, language) {
 }
 
 function createButtonMetadata(videoElementIndex) {
-    var title = getVideoName(videoElementIndex);
-    var subtitle = playerJson[videoElementIndex].videoJsonPlayer.VSU;
-    var description_short = playerJson[videoElementIndex].videoJsonPlayer.V7T;
-    var description = playerJson[videoElementIndex].videoJsonPlayer.VDE;
-    var tags = playerJson[videoElementIndex].videoJsonPlayer.VTA;
+    let title = getVideoName(videoElementIndex);
+    let subtitle = playerJson[videoElementIndex].videoJsonPlayer.VSU;
+    let description_short = playerJson[videoElementIndex].videoJsonPlayer.V7T;
+    let description = playerJson[videoElementIndex].videoJsonPlayer.VDE;
+    let tags = playerJson[videoElementIndex].videoJsonPlayer.VTA;
 
     // Continue if at least one field is filled
     if (title !== undefined || description_short !== undefined || subtitle !== undefined || description !== undefined || tags !== undefined) {
-        var button = document.createElement('a');
+        let button = document.createElement('a');
         button.setAttribute('class', 'btn btn-default');
         button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
         button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
-        var metadata = (title !== undefined ? "[Title]\n" + title:'')
+        let metadata = (title !== undefined ? "[Title]\n" + title:'')
             + (subtitle !== undefined ? "\n\n[Subtitle]\n" + subtitle:'')
             + (description_short !== undefined ? "\n\n[Description-short]\n" + description_short:'')
             + (description !== undefined ? "\n\n[Description]\n" + description:'')
             + (tags !== undefined ? "\n\n[Tags]\n" + tags:'');
-        var encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
+        let encodedData = window.btoa(unescape(encodeURIComponent(metadata)));
         button.setAttribute('href', 'data:application/octet-stream;charset=utf-8;base64,' + encodedData);
         button.setAttribute('download', getVideoName(videoElementIndex) + '.txt');
         return button;
@@ -449,24 +487,32 @@ function createButtonMetadata(videoElementIndex) {
 }
 
 function getComboboxSelectedValue(combobox) {
-    var cb = document.getElementById(combobox);
+    let cb = document.getElementById(combobox);
     if (cb == null) {
         cb = parent.document.getElementById(combobox);
     }
     return cb[cb.selectedIndex].value;
 }
 
+function getDownloadButton(index) {
+    let btn = document.getElementById('btnDownload' + index);
+    if (btn == null) {
+        btn = parent.document.getElementById('btnDownload' + index);
+    }
+    return btn;
+}
+
 function createLanguageComboBox(videoElementIndex) {
-    var languageComboBox = document.createElement('select');
+    let languageComboBox = document.createElement('select');
     languageComboBox.setAttribute('id', 'cbLanguage' + videoElementIndex);
 
     // Associate onchange event with function (bypass for GM)
-    languageComboBox.onchange = function() {
-        var selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
+    languageComboBox.onchange = () => {
+        let selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
         console.log("\n> Language changed to " + selectedLanguage);
-        var btn = document.getElementById('btnDownload' + videoElementIndex);
-        var selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
-        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
+        let btn = getDownloadButton(videoElementIndex);
+        let selectedQuality = getComboboxSelectedValue('cbQuality' + videoElementIndex);
+        let url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
         if (url !== '') {
             btn.style.visibility = "visible";
             btn.setAttribute('href', url);
@@ -476,31 +522,32 @@ function createLanguageComboBox(videoElementIndex) {
     };
 
     // Fill with available languages
-    for (var l in languages[videoElementIndex]) {
+    for (let l in languages[videoElementIndex]) {
         if (languages[videoElementIndex][l] !== 0) {
             languageComboBox.innerHTML += "<option value='" + l + "'>" + languages[videoElementIndex][l] + "</option>";
         }
     }
     languageComboBox.setAttribute('class', 'btn btn-default');
-    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;" : "max-width: 160px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
+    languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;"
+                                            : "max-width: 160px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
     return languageComboBox;
 }
 
 function createQualityComboBox(videoElementIndex) {
-    var qualityComboBox = document.createElement('select');
+    let qualityComboBox = document.createElement('select');
     qualityComboBox.setAttribute('id', 'cbQuality' + videoElementIndex);
 
     // Associate onchange event with function (bypass for GM)
-    qualityComboBox.onchange = function() {
-        var selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
+    qualityComboBox.onchange = () => {
+        let selectedQuality = qualityComboBox.options[qualityComboBox.selectedIndex].value;
         console.log("\n> Quality changed to " + selectedQuality);
-        var btn = document.getElementById('btnDownload' + videoElementIndex);
+        let btn = document.getElementById('btnDownload' + videoElementIndex);
         if (btn == null) {
             btn = parent.document.getElementById('btnDownload' + videoElementIndex);
         }
-        var selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
+        let selectedLanguage = getComboboxSelectedValue('cbLanguage' + videoElementIndex);
         console.log(selectedLanguage);
-        var url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
+        let url = getVideoUrl(videoElementIndex, selectedQuality, selectedLanguage);
         if (url !== '') {
             btn.style.visibility = "visible";
             btn.setAttribute('href', url);
@@ -511,18 +558,18 @@ function createQualityComboBox(videoElementIndex) {
     };
 
     // Fill with available qualities
-    for (var q in qualities[videoElementIndex]) {
+    for (let q in qualities[videoElementIndex]) {
         if (qualities[videoElementIndex][q] !== 0) {
             qualityComboBox.innerHTML += "<option value='" + q + "'>" + qualities[videoElementIndex][q] + "</option>";
         }
     }
     qualityComboBox.setAttribute('class', 'btn btn-default');
-    qualityComboBox.setAttribute('style', 'width:140px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    qualityComboBox.setAttribute('style', 'width:200px; padding: 6px; margin-left:10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return qualityComboBox;
 }
 
 function createCreditsElement() {
-    var credits = document.createElement('div');
+    let credits = document.createElement('div');
     credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background:#262626');
     credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love' +
         '<br /><a style=\'color:rgb(255, 255, 255);\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
@@ -530,11 +577,11 @@ function createCreditsElement() {
 }
 
 function decoratePlayer360(videoElement, videoURL, videoName) {
-    var container = document.createElement('div');
+    let container = document.createElement('div');
     insertAfter(container, videoElement);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background:#262626; padding: 10px;');
-    var button = document.createElement('a');
+    let button = document.createElement('a');
     button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     button.setAttribute('id', 'btnArteDownloader');
     button.setAttribute('href', videoURL);
@@ -546,43 +593,47 @@ function decoratePlayer360(videoElement, videoURL, videoName) {
 }
 
 function decoratePlayer(videoElement, videoElementIndex) {
-    var container = document.createElement('div');
-    var parent = videoElement.parentNode;
+    let container = document.createElement('div');
+    let parent = videoElement.parentNode;
 
-    // decorate iframe from embedment
-    if (window.frameElement !== null) {
+    // find parent to decorate
+    // @TODO: deco https://info.arte.tv/fr/litalie-veut-redonner-leur-identite-aux-refugies-noyes-en-mediterranee
+    if (videoElement.nodeName === "IFRAME" || window.frameElement !== null) {
+        // !hardcoded spaghetti, @TODO: find a better way to find parent
         parent = window.parent.document.querySelector('div.video-embed');
-        setTimeout(function(){ insertAfter(container, parent); }, 2000);
-    } else {
-        // decorate iframe from top window
-        if (videoElement.nodeName === "IFRAME") {
-            console.log("> Decorating iFrame player");
-            parent = document.querySelector('div.video-embed');
+        if (parent == null) {
+            parent = window.parent.document.querySelector('div.next-video-playlist');
             if ( parent == null ) {
-                parent = document.querySelector('div.article-video');
-                if ( parent == null ) {
-                    console.error("> Could not find a parent to decorate.");
+                parent = window.parent.document.querySelector('div.article-video');
+                if (parent == null) {
+                    parent = window.parent.document.querySelector('div.video-container');
+                    if (parent == null) {
+                        console.error("Couldn't find parent to decorate.");
+                        return;
+                    }
                 }
             }
-            setTimeout(function(){ insertAfter(container, parent); }, 2000);
         }
     }
+
+    setTimeout( () => { insertAfter(container, parent); }, 3500); // !hardcoded, @TODO: callback after parent stops cleaning his childNodes
+    container.setAttribute('id', 'video_' + videoElementIndex);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background:#262626; padding: 10px;');
 
     // Create video name span
-    var videoNameSpan = document.createElement('span');
-    var subtitle = playerJson[videoElementIndex].videoJsonPlayer.VSU;
+    let videoNameSpan = document.createElement('span');
+    let subtitle = playerJson[videoElementIndex].videoJsonPlayer.subtitle;
     videoNameSpan.innerHTML = "<strong>" + getVideoName(videoElementIndex) + (subtitle !== undefined ? " - " + subtitle : "") + "</strong><br/>";
     videoNameSpan.setAttribute('style', 'margin-top:10px; text-align: center; color:rgb(255, 255, 255); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 16px;');
     container.appendChild(videoNameSpan);
 
     // Create language combobox
-    var languageComboBox = createLanguageComboBox(videoElementIndex)
+    let languageComboBox = createLanguageComboBox(videoElementIndex)
     container.appendChild(languageComboBox);
 
     // Check if there are languages available to select
-    var selectedLanguage;
+    let selectedLanguage;
     if (languageComboBox.options.length > 0) {
         selectedLanguage = languageComboBox.options[languageComboBox.selectedIndex].value;
     }
@@ -591,49 +642,22 @@ function decoratePlayer(videoElement, videoElementIndex) {
     container.appendChild(createQualityComboBox(videoElementIndex));
 
     // Create download button
-    var btnDownload = createButtonDownload(videoElementIndex, selectedLanguage);
+    let btnDownload = createButtonDownload(videoElementIndex, selectedLanguage);
     if (btnDownload !== null) {
         container.appendChild(btnDownload);
     }
 
     // Create metadata button
-    var btnMetadata = createButtonMetadata(videoElementIndex);
+    let btnMetadata = createButtonMetadata(videoElementIndex);
     if (btnMetadata !== null) {
         container.appendChild(btnMetadata);
     }
 
     // Create credits ribbon
-    var credits = createCreditsElement();
+    let credits = createCreditsElement();
     container.appendChild(credits);
 
     // Workaround decoration overlapping next SECTION
-    var parentSection = getParent(parent, 'SECTION', 'margin-bottom-s');
-    parentSection.style.marginBottom = "9rem";
-}
-
-is_playlist = findPlayers();
-console.log("> Found " + nbVideoPlayers + " video player(s):");
-if (nbVideoPlayers > 0) {
-    // Init global vars
-    playerJson = [nbVideoPlayers];
-    nbVideos = [nbVideoPlayers];
-    nbHTTP = [nbVideoPlayers];
-    nbHLS = [nbVideoPlayers];
-    languages = [nbVideoPlayers];
-    qualities = [nbVideoPlayers];
-    for (i = 0; i < nbVideoPlayers; i++) {
-        playerJson[i] = 0;
-        nbVideos[i] = 0;
-        nbHTTP[i] = 0;
-        nbHLS[i] = 0;
-        languages[i] = new Object;
-        qualities[i] = new Object;
-    }
-
-    if (!is_playlist) {
-        // Analyse each video player, then decorate them
-        for (var i = 0; i < nbVideoPlayers; i++) {
-            findPlayerJson(videoPlayerElements[i], i);
-        }
-    }
+    let parentSection = getParent(parent, 'SECTION', 'margin-bottom-s'); //!hardcoded, @TODO: find a better way to find proper parent
+    parentSection.style.marginBottom = playerJson.length * 8 + "rem";
 }
