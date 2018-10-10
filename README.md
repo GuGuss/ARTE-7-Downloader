@@ -1,7 +1,7 @@
 ARTE-Downloader
 =================
 
-Current version: **2.10**.
+Current version: **3.0**.
 
 CONTRIBUTORS
 -----------
@@ -11,32 +11,24 @@ CONTRIBUTORS
 DESCRIPTION
 -----------
 
-This script works as a browser extension to download any video on [Arte website](http://www.arte.tv/).
-
-Go to a video on [Arte website](http://www.arte.tv/) and you should see buttons under a video:
+This script works as a browser extension to offer download options under videos on [Arte website](https://www.arte.tv/).
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
 
-NB: If your browser open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
+NB: If your browser opens the video in a new tab: save it with CTRL+S.
 
-For livestreams, you can either:
-* Download directly the MP4 video if available.
-* Open [VLC](http://www.videolan.org/vlc/) > Open its convert tool (CTRL+R) > Network tab > Copy the link > Convert/Save the video.
-
-![](http://i.imgur.com/GjvVHLv.jpg)
+![](https://i.imgur.com/GjvVHLv.jpg)
 
 INSTALLATION
 ------------
 ### Step 1 : Install a script manager
-* [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) script manager.
-* [Chrome users] Install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) script manager.
-* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) script manager.
+* [Firefox] [Tampermonkey](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) or [Greasemonkey](https://addons.mozilla.org/en-GB/firefox/addon/greasemonkey/) or [Violentmonkey](https://addons.mozilla.org/en-US/firefox/addon/violentmonkey/).
+* [Chromium(Chrome/Vivaldi/Brave)] [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag).
+* [Opera] [Tampermonkey-beta](https://addons.opera.com/en/extensions/details/tampermonkey-beta/).
 
 ### Step 2 : Install the script
-* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install* and you're all set!
-
-**Note** To get the latest version: either update through your script manager, or redo step 2 ;-)
+* Open [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install/Reinstall* and you're all set!
 
 FAQ
 ---
@@ -46,8 +38,7 @@ If you often travel with poor Internet connections, now you can download videos 
 
 **Why www.arte.tv ?**
 ARTE is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
-About ARTE: http://www.arte.tv/sites/en/arte-europe/about/
-TV Broadcast: http://reception.arte.tv/
+About ARTE: https://www.arte.tv/sites/en/corporate
 
 
 DISCLAIMER
