@@ -1,0 +1,19 @@
+{
+  "name": "Arte+7 Downloader",
+  "manifest_version": 2,
+  "version": "2.6",
+  "description": "This script works as a browser extension to download any video on Arte website.",
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*.arte.tv/*",
+        "https://*.arte.tv/*"
+      ],
+      "js": [
+        "vendor/webextension-polyfill.js",
+        "greasemonkey-polyfill.js",
+        "arte-downloader.user.js"
+      ]
+    }
+  ]
+}
