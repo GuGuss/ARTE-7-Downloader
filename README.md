@@ -1,54 +1,48 @@
-ARTE-Downloader
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](../../raw/master/LICENSE)
+***
+ARTE-Downloader **3.1**
 =================
+INSTALLATION
+------------
+You can choose to either install this as a browser addon, or as a script.
 
-Current version: **2.10**.
-
-CONTRIBUTORS
------------
-
-[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), @aug-riedinger, @maxlath, @uahim, @walialu
+BROWSER | WEB-EXTENSION | SCRIPT
+-|-|-
+Firefox | Drop [arte_downloader-x.xx.firefox.signed.xpi](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.firefox.signed.xpi)<br>on your addon page (about:addons) | **Step 1:** [get a script manager](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) <br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
+Chromium<br>(Chrome/Vivaldi/Brave) | Drop [arte_downloader-x.xx.chromium.zip](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.chromium.zip)<br>on your extensions page (chrome://extensions) | **Step 1:** [get a script manager](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)<br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
 
 DESCRIPTION
 -----------
-
-This script works as a browser extension to download any video on [Arte website](http://www.arte.tv/).
-
-Go to a video on [Arte website](http://www.arte.tv/) and you should see buttons under a video:
+A browser addon to offer download options under videos on [Arte website](https://www.arte.tv/).
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
 
-NB: If your browser open the MP4 video in a new tab: save it (CTRL+S) and close the tab.
-
-For livestreams, you can either:
-* Download directly the MP4 video if available.
-* Open [VLC](http://www.videolan.org/vlc/) > Open its convert tool (CTRL+R) > Network tab > Copy the link > Convert/Save the video.
-
-![](http://i.imgur.com/GjvVHLv.jpg)
-
-INSTALLATION
-------------
-### Step 1 : Install a script manager
-* [Firefox users] Install the [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) script manager.
-* [Chrome users] Install the [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) script manager.
-* [Opera users] Install the [Violent monkey](https://addons.opera.com/fr/extensions/details/violent-monkey) script manager.
-
-### Step 2 : Install the script
-* Go to [arte-downloader.user.js](../../raw/master/arte-downloader.user.js): *Install* and you're all set!
-
-**Note** To get the latest version: either update through your script manager, or redo step 2 ;-)
+![](https://i.imgur.com/GjvVHLv.jpg)
 
 FAQ
 ---
+**The video opens in a tab ?**
+Save it with ***CTRL+S***.
 
-**Why should I use this script ?**
+**I want to download a livestream ?**
+- **step 1:** [install the VLC player](https://www.videolan.org/vlc/#download)
+- **step 2:** copy the livestream link under the video (right click / *copy link*)
+- **step 3:** open VLC > ***CTRL+R*** > network tab > ***CTRL+V*** > ***"Convert/Save video"***
+
+**It won't work as intended ?**
+Report your issue [here](https://github.com/GuGuss/ARTE-7-Downloader/issues).
+
+**Why should I use this addon ?**
 If you often travel with poor Internet connections, now you can download videos to watch them later.
 
 **Why www.arte.tv ?**
 ARTE is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
-About ARTE: http://www.arte.tv/sites/en/arte-europe/about/
-TV Broadcast: http://reception.arte.tv/
+About ARTE: https://www.arte.tv/sites/en/corporate
 
+CONTRIBUTORS
+-----------
+[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), [@oncletom](https://github.com/oncletom), @aug-riedinger, @maxlath, @uahim, @walialu
 
 DISCLAIMER
 -------

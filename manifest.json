@@ -1,0 +1,23 @@
+{
+    "manifest_version": 2,
+    "name": "Arte downloader",
+    "version": "3.1",
+    "description": "Download videos on Arte.tv",
+    "icons": {
+      "48": "img/arte.svg"
+    },
+    "permissions": [
+        "https://*/"
+    ],
+    "content_scripts": [
+    {
+        "matches": [
+            "*://*.arte.tv/*"
+        ],
+        "js": [
+            "src/arte-downloader.js"
+        ],
+        "all_frames": true
+    }
+    ]
+}
