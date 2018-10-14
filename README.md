@@ -1,7 +1,13 @@
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](../../raw/master/LICENSE)
 ***
-ARTE-Downloader **3.1**
+ARTE-Downloader **3.1** [![Licence](https://img.shields.io/badge/License-GPLv3-blue.svg)](../master/LICENSE.md)
 =================
+* [Installation](#installation)
+* [FAQ](#faq)
+* [Issues](../../issues)
+* [Contributors](#contributors)
+* [Disclaimer](#disclaimer)
+* [License](../master/LICENSE.md)
+
 INSTALLATION
 ------------
 You can choose to either install this as a browser addon, or as a script.
@@ -17,24 +23,23 @@ A browser addon to offer download options under videos on [Arte website](https:/
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
-
-![](https://i.imgur.com/GjvVHLv.jpg)
+<img src="https://i.imgur.com/GjvVHLv.jpg" alt="preview" width="300"/>
 
 FAQ
 ---
+**Why should I use this addon ?**
+If you often travel with poor Internet connections, now you can download videos to watch them later.
+
 **The video opens in a tab ?**
 Save it with ***CTRL+S***.
 
 **I want to download a livestream ?**
-- **step 1:** [install the VLC player](https://www.videolan.org/vlc/#download)
-- **step 2:** copy the livestream link under the video (right click / *copy link*)
-- **step 3:** open VLC > ***CTRL+R*** > network tab > ***CTRL+V*** > ***"Convert/Save video"***
+- **step 1:** [install VLC](https://www.videolan.org/vlc/#download) and launch it
+- **step 2:** **copy the livestream link** under the video (right click / *copy link*)
+- **step 3:** in VLC: ***CTRL+R*** > network tab > ***CTRL+V*** > ***"Convert/Save video"***
 
 **It won't work as intended ?**
-Report your issue [here](https://github.com/GuGuss/ARTE-7-Downloader/issues).
-
-**Why should I use this addon ?**
-If you often travel with poor Internet connections, now you can download videos to watch them later.
+Report your issue [here](../../issues).
 
 **Why www.arte.tv ?**
 ARTE is an amazing place for culture. If you don't have a TV : ARTE website is the only way to watch it.
