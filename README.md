@@ -19,8 +19,8 @@ You can choose to either install this as a browser addon, or as a script.
 
 BROWSER | WEB-EXTENSION | SCRIPT
 -|-|-
-Firefox | Add from: [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/arte-downloader/)<br>or from: [github](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.firefox.signed.xpi) | **Step 1:** [get a script manager](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) <br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
-Chromium<br>(Chrome/Vivaldi/Brave) | Drop [arte_downloader-x.xx.chromium.zip](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.chromium.zip)<br>on your extensions page (chrome://extensions) | **Step 1:** [get a script manager](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)<br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
+Firefox | Add the extension from: [github](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.firefox.signed.xpi) | **Step 1:** [get a script manager](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) <br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
+Chromium<br>(Chrome/Vivaldi/Brave) | Download [arte_downloader-x.xx.chromium.zip](https://github.com/GuGuss/ARTE-7-Downloader/releases/download/3.1/arte_downloader-3.1.chromium.zip)<br>and drop it on your extensions page (chrome://extensions) | **Step 1:** [get a script manager](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)<br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
 
 FAQ
 ---
