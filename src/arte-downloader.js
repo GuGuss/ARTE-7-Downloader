@@ -408,6 +408,20 @@ ENTRY POINT
         for (let i = 0; i < playerIframes.length; i++) {
             findPlayerJson(playerIframes[i], i);
         }
+
+        if (! playerIframes.length) {
+            let id = window.location.pathname.match(/videos\/([^\/]*)/)[1];
+            let playerJsonUrl = 'https://api.arte.tv/api/player/v1/config/fr/' + id;
+            initParsingSystem(1);
+            let _cb = (json) => {
+                playerJson[0] = json;
+                preParsePlayerJson(0);
+                let container = buildContainer(0);
+                let anchor = document.getElementsByClassName('program-title')[0].parentNode.parentNode;
+                anchor.appendChild(container);
+            };
+            window.fetch(playerJsonUrl).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
+        }
     }
 })();
 
