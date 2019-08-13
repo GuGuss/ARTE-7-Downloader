@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.1;
+let scriptVersion = 3.2;
 let playerJson;
 let nbVideos;
 let nbHTTP;
