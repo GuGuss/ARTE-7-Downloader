@@ -280,6 +280,8 @@ function initParsingSystem(nbVideoPlayers) {
             languages[i] = new Object;
             qualities[i] = new Object;
         }
+    } else {
+        console.log("> No video found");
     }
 }
 
