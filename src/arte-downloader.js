@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.1;
+let scriptVersion = 3.2;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -280,6 +280,8 @@ function initParsingSystem(nbVideoPlayers) {
             languages[i] = new Object;
             qualities[i] = new Object;
         }
+    } else {
+        console.log("> No video found");
     }
 }
 
@@ -405,6 +407,20 @@ ENTRY POINT
         initParsingSystem(playerIframes.length);
         for (let i = 0; i < playerIframes.length; i++) {
             findPlayerJson(playerIframes[i], i);
+        }
+
+        if (! playerIframes.length) {
+            let id = window.location.pathname.match(/videos\/([^\/]*)/)[1];
+            let playerJsonUrl = 'https://api.arte.tv/api/player/v1/config/fr/' + id;
+            initParsingSystem(1);
+            let _cb = (json) => {
+                playerJson[0] = json;
+                preParsePlayerJson(0);
+                let container = buildContainer(0);
+                let anchor = document.getElementsByClassName('program-title')[0].parentNode.parentNode;
+                anchor.appendChild(container);
+            };
+            window.fetch(playerJsonUrl).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
         }
     }
 })();
@@ -585,31 +601,8 @@ function decoratePlayer360(videoElement, videoURL, videoName) {
     container.appendChild(button);
 }
 
-function decoratePlayer(videoElement, videoElementIndex) {
+function buildContainer(videoElementIndex) {
     let container = document.createElement('div');
-    let parent = videoElement.parentNode;
-
-    // find parent to decorate
-    // @TODO: deco https://info.arte.tv/fr/litalie-veut-redonner-leur-identite-aux-refugies-noyes-en-mediterranee
-    if (videoElement.nodeName === "IFRAME" || window.frameElement !== null) {
-        // !hardcoded spaghetti, @TODO: find a better way to find parent
-        parent = window.parent.document.querySelector('div.video-embed');
-        if (parent == null) {
-            parent = window.parent.document.querySelector('div.next-video-playlist');
-            if ( parent == null ) {
-                parent = window.parent.document.querySelector('div.article-video');
-                if (parent == null) {
-                    parent = window.parent.document.querySelector('div.video-container');
-                    if (parent == null) {
-                        console.error("Couldn't find parent to decorate.");
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    setTimeout( () => { insertAfter(container, parent); }, 3500); // !hardcoded, @TODO: callback after parent stops cleaning his childNodes
     container.setAttribute('id', 'video_' + videoElementIndex);
     container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
     container.setAttribute('style', 'background:#262626; padding: 10px;');
@@ -650,7 +643,36 @@ function decoratePlayer(videoElement, videoElementIndex) {
     let credits = createCreditsElement();
     container.appendChild(credits);
 
+    return container;
+}
+
+function decoratePlayer(videoElement, videoElementIndex) {
+    let parent = videoElement.parentNode;
+
+    // find parent to decorate
+    // @TODO: deco https://info.arte.tv/fr/litalie-veut-redonner-leur-identite-aux-refugies-noyes-en-mediterranee
+    if (videoElement.nodeName === "IFRAME" || window.frameElement !== null) {
+        // !hardcoded spaghetti, @TODO: find a better way to find parent
+        parent = window.parent.document.querySelector('div.video-embed');
+        if (parent == null) {
+            parent = window.parent.document.querySelector('div.next-video-playlist');
+            if ( parent == null ) {
+                parent = window.parent.document.querySelector('div.article-video');
+                if (parent == null) {
+                    parent = window.parent.document.querySelector('div.video-container');
+                    if (parent == null) {
+                        console.error("Couldn't find parent to decorate.");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    var container = buildContainer(videoElement, videoElementIndex);
+    setTimeout( () => { insertAfter(container, parent); }, 3500); // !hardcoded, @TODO: callback after parent stops cleaning his childNodes
+
     // Workaround decoration overlapping next SECTION
-    let parentSection = getParent(parent, 'SECTION', 'margin-bottom-s'); //!hardcoded, @TODO: find a better way to find proper parent
+    let parentSection = parent//getParent(parent, 'SECTION', 'margin-bottom-s'); //!hardcoded, @TODO: find a better way to find proper parent
     parentSection.style.marginBottom = playerJson.length * 8 + "rem";
 }
