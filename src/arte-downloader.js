@@ -423,7 +423,7 @@ ENTRY POINT
             // - Walialu, 2019-09-04 18:12 +0200
             const _win_loc = window.location.pathname.split('/');
             const _lang = _win_loc[1];
-            const _api_base = " https://api.arte.tv/api/player/v1/config/" + _lang + "/";
+            const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
             const _video_id = _win_loc[3];
             const _video_name = _win_loc[4];
             const _anchor = document.querySelector('.video-thumbnail');
