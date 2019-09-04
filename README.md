@@ -45,7 +45,7 @@ About ARTE: https://www.arte.tv/sites/en/corporate
 
 CONTRIBUTORS
 -----------
-[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), [@oncletom](https://github.com/oncletom), @aug-riedinger, @maxlath, @uahim, @walialu
+[@Bumbadawg](https://github.com/Bumbadawg), [@GuGuss](https://github.com/GuGuss), [@oncletom](https://github.com/oncletom), @aug-riedinger, @maxlath, @uahim, [@walialu](https://github.com/walialu)
 
 DISCLAIMER
 -------
