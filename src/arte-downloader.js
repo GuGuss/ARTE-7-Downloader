@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.2;
+let scriptVersion = 3.3;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -410,17 +410,50 @@ ENTRY POINT
         }
 
         if (! playerIframes.length) {
-            let id = window.location.pathname.match(/videos\/([^\/]*)/)[1];
-            let playerJsonUrl = 'https://api.arte.tv/api/player/v1/config/fr/' + id;
+            // @XXX
+            // Think of a more clever way to trigger/retrigger this,
+            // because ARTE.tv is now hip and uses some clever way to
+            // load data incrementally and not only on real page-loads
+            // so this is sometimes broken - but works,
+            // if you force a browser reload (either via F5 or CTRL+R ..)
+            //
+            // So we need to keep track of that in the future,
+            // somehow.. IDK
+            //
+            // - Walialu, 2019-09-04 18:12 +0200
+            const _win_loc = window.location.pathname.split('/');
+            const _lang = _win_loc[1];
+            const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
+            const _video_id = _win_loc[3];
+            const _video_name = _win_loc[4];
+            const _anchor = document.querySelector('.video-thumbnail');
+            const _maxNags = 20;
+            const _nagDelay = 500;
+            let _nagCounter = 0;
+
             initParsingSystem(1);
+            // This is because some weird shit is causing redraws on the ARTE.tv site
+            // probably whatever frontend-framework is currently hyped on hackernews
+            //
+            // So we force our UI to be drawn up to (_maxNags*_nagDelay) seconds
+            // if it does not exist, yet!
+            //
+            // - Walialu, 2019-09-04 17:17 +0200
+            const _naggerFunc = () => {
+                if (_nagCounter < _maxNags) {
+                    _nagCounter++;
+                    if (!document.getElementById("cbLanguage0")) {
+                        _anchor.appendChild(buildContainer(0));
+                    }
+                    setTimeout(_naggerFunc, _nagDelay);
+                }
+            };
             let _cb = (json) => {
                 playerJson[0] = json;
                 preParsePlayerJson(0);
-                let container = buildContainer(0);
-                let anchor = document.getElementsByClassName('program-title')[0].parentNode.parentNode;
-                anchor.appendChild(container);
+                setTimeout(_naggerFunc, _nagDelay);
             };
-            window.fetch(playerJsonUrl).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
+            window.fetch(_api_base + _video_id).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
         }
     }
 })();
