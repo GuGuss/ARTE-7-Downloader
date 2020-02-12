@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Arte+7 Downloader
 // @description Download videos or get stream link of ARTE programs in the selected language.
-// @include     *//*.arte.tv/*
+// @include     https://*.arte.tv/*
 // @updateURL   https://github.com/GuGuss/ARTE-7-Downloader/raw/master/arte-downloader.user.js
 // @icon        https://www.arte.tv/favicon.ico
 // ==/UserScript==
