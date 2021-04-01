@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.3;
+let scriptVersion = 3.3.1;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -292,6 +292,27 @@ ENTRY POINT
 */
 (function findPlayers() {
     console.log('\n===== ARTE DOWNLOADER v' + scriptVersion + ' started =====');
+    var oldHref = document.location.href;
+
+    window.addEventListener("load",function(event) {
+    var
+         bodyList = document.querySelector("body")
+        ,observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (oldHref != document.location.href) {
+                    oldHref = document.location.href;
+                    console.log("URL changed, reloading page"); // dirty hack avoiding vars reset.
+                    window.location.reload();
+                }
+            });
+        });
+    var config = {
+        childList: true,
+        subtree: true
+    };
+    observer.observe(bodyList, config);
+    }, false);
+  
     // Look up inline scripts to find highlight of the day playlist
     /*let scripts = document.querySelectorAll("script");
     if (scripts !== undefined) {
