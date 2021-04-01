@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.3.1;
+let scriptVersion = 3.3;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -293,7 +293,6 @@ ENTRY POINT
 (function findPlayers() {
     console.log('\n===== ARTE DOWNLOADER v' + scriptVersion + ' started =====');
     var oldHref = document.location.href;
-
     window.addEventListener("load",function(event) {
     var
          bodyList = document.querySelector("body")
@@ -312,7 +311,6 @@ ENTRY POINT
     };
     observer.observe(bodyList, config);
     }, false);
-  
     // Look up inline scripts to find highlight of the day playlist
     /*let scripts = document.querySelectorAll("script");
     if (scripts !== undefined) {
