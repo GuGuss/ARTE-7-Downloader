@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-let scriptVersion = 3.3;
+const scriptVersion = 3.4;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -137,16 +137,6 @@ function preParsePlayerJson(videoElementIndex) {
     }
 }
 
-function parsePlayerJson(playerJsonUrl, videoElement, videoElementIndex) {
-    console.log("    - #" + videoElementIndex + " player JSON: " + playerJsonUrl);
-    let _cb = (json) => {
-        playerJson[videoElementIndex] = json;
-        preParsePlayerJson(videoElementIndex);
-        decoratePlayer(videoElement, videoElementIndex);
-    };
-    window.fetch(playerJsonUrl).then((resp) => resp.json()).then(_cb);
-}
-
 function getVideoName(videoElementIndex) {
     let name = playerJson[videoElementIndex].videoJsonPlayer.VTI;
     if (name === null) {
@@ -195,72 +185,8 @@ function getVideoUrl(videoElementIndex, quality, language) {
         }
     }
 
-    console.log("> Video not found.")
+    console.log("> No video found in " + language + " [" + quality + "] for #" + videoElementIndex )
     return '';
-}
-
-function findPlayerJson(videoElement, videoElementIndex) {
-    // Get player URL to find its associated json
-    let playerUrl = null;
-    let jsonUrl = null;
-
-    // iframe embedded media
-    if (playerUrl === null) {
-        playerUrl = unescape(videoElement.getAttribute('src'));
-        jsonUrl = playerUrl.split('json_url=')[1];
-        if (jsonUrl == undefined) {
-            jsonUrl = playerUrl.split('json_playlist_url=')[1];
-            if (jsonUrl !== undefined) {
-                return;
-            }
-        }
-        if (jsonUrl !== undefined) {
-            parsePlayerJson(jsonUrl, videoElement, videoElementIndex);
-        } else {
-            console.log("> Searching a 360 video in: " + playerUrl);
-            xmlHttpRequest({
-                method: "GET",
-                url: playerUrl,
-                onload: response => {
-                    var doc = response.responseText;
-                    var videoName, videoURL;
-                    if (playerUrl.indexOf("arte360") > -1) {
-                        var playerJS = playerUrl.split("?root")[0] + "jsmin/output.min.js?" + doc.split("window.appVersion = \"")[1].split("\"")[0];
-                        console.log("> 360 player JS: " + playerJS);
-                        var root = getURLParameter(playerUrl, "root")
-                        videoName = getURLParameter(playerUrl, "video")
-                        videoURL = root + "/video/download/4K/" + videoName + "_4K.mp4";
-                        console.log("> Video URL: " + videoURL);
-                        var subtitlesURL = root + "/subtitles/" + videoName + "_" + getURLParameter(playerUrl, "lang") + ".srt";
-                        console.log("> Subtitles URL: " + subtitlesURL);
-                        decoratePlayer360(videoElement, videoURL, videoName, subtitlesURL);
-                    }
-                }
-            });
-        }
-    }
-
-    // Check if player URL is the json
-    else if (playerUrl.substring(playerUrl.length - 6, playerUrl.length - 1) === ".json") {
-        parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-    }
-
-    // Look for player URL inside the player json
-    else {
-        xmlHttpRequest({
-            method: "GET",
-            url: playerUrl,
-            onload: response => {
-                let json = JSON.parse(response.responseText);
-                playerUrl = json["videoJsonPlayer.videoPlayerUrl"];
-                if (playerUrl !== undefined) {
-                    parsePlayerJson(playerUrl, videoElement, videoElementIndex);
-                } else {
-                    console.error("Couldn't find a player URL.");
-                }
-            }
-        });
-    }
 }
 
 function initParsingSystem(nbVideoPlayers) {
@@ -281,7 +207,7 @@ function initParsingSystem(nbVideoPlayers) {
             qualities[i] = new Object;
         }
     } else {
-        console.log("> No video found");
+        console.log("> No video players found.");
     }
 }
 
@@ -292,46 +218,56 @@ ENTRY POINT
 */
 (function findPlayers() {
     console.log('\n===== ARTE DOWNLOADER v' + scriptVersion + ' started =====');
+  
+    // Observe href change => rerun script.
     var oldHref = document.location.href;
     window.addEventListener("load",function(event) {
-    var
-         bodyList = document.querySelector("body")
-        ,observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (oldHref != document.location.href) {
-                    oldHref = document.location.href;
-                    console.log("URL changed, reloading page"); // dirty hack avoiding vars reset.
-                    window.location.reload();
-                }
+        var
+             bodyList = document.querySelector("body")
+            ,observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (oldHref != document.location.href) {
+                        console.log("> URL changed from " + oldHref + " => " + document.location.href );
+                        oldHref = document.location.href;
+
+                        // dirty hack avoiding vars reset.
+                        // @TODO: reset global vars
+                        console.log("> Reloading page to rerun the script..");
+                        window.location.reload();
+                    }
+                });
             });
-        });
-    var config = {
-        childList: true,
-        subtree: true
-    };
-    observer.observe(bodyList, config);
+        var config = {
+            childList: true,
+            subtree: true
+        };
+        observer.observe(bodyList, config);
     }, false);
-    // Look up inline scripts to find highlight of the day playlist
+
+    // Check playlist
+    // @TODO parse inline script to find playlist link
+    // Find highlight of the day playlist
     /*let scripts = document.querySelectorAll("script");
     if (scripts !== undefined) {
         let matchStringStart = "window.__INITIAL_STATE__ = ";
-        let matchStringEnd = "}}}}";
+        let matchStringEnd = "}]}]}";
         for(let i=0; i < scripts.length; i++) {
             let str = scripts[i].innerHTML.trim();
             if (str.startsWith(matchStringStart)) {
                 str = str.split(matchStringStart)[1].split(matchStringEnd)[0] + matchStringEnd;
                 let inlineJson = JSON.parse(str);
                 inlineJson = inlineJson.pages.list["LIVE_fr_{}"].zones;
-                if (inlineJson[0].code.name == "today_guide_LIVE") {
-                    inlineJson = inlineJson[0].data;
-                    console.log(inlineJson);
-                }
+                inlineJson.forEach( el => {
+                    if (el.code.name == "today_guide_LIVE") {
+                        inlineJson = el.data;
+                        console.debug(inlineJson);
+                    } 
+                });
             }
         }
-    }*/
+    }
 
-    // Check playlist
-    let playlistJson = /playlist_url=([^&]+)/.exec(window.location.href);
+    let playlistJson = ...................................
     if (playlistJson != null) {
         playlistJson = unescape(playlistJson[1]);
         console.log("> Found playlist json: " + playlistJson);
@@ -345,7 +281,17 @@ ENTRY POINT
                 for (let i = 0; i < total; i++) {
                     let videoJsonUrl = jsonUrl.videos[i].jsonUrl;
                     videoJsonUrl = videoJsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
-                    parsePlayerJson(videoJsonUrl, document, i); // document shall be the inner player iframe
+                    
+                    let videoElementIndex = i;
+                        console.log("    - #" + videoElementIndex + " player JSON: " + videoJsonUrl);
+                        let _cb = (json) => {
+                            playerJson[videoElementIndex] = json;
+                            preParsePlayerJson(videoElementIndex);
+                            // decorate playlist
+                        };
+                        window.fetch(videoJsonUrl).then((resp) => resp.json()).then(_cb);
+                    }
+
                 }
 
                 // Wait recursively for each video downloaders to be created
@@ -421,14 +367,7 @@ ENTRY POINT
     }
 
     // else deal w/ single video players
-    else {
-        let playerIframes = document.querySelectorAll("iframe");
-        initParsingSystem(playerIframes.length);
-        for (let i = 0; i < playerIframes.length; i++) {
-            findPlayerJson(playerIframes[i], i);
-        }
-
-        if (! playerIframes.length) {
+    else {*/
             // @XXX
             // Think of a more clever way to trigger/retrigger this,
             // because ARTE.tv is now hip and uses some clever way to
@@ -440,6 +379,7 @@ ENTRY POINT
             // somehow.. IDK
             //
             // - Walialu, 2019-09-04 18:12 +0200
+            console.log("> Querying Arte API");
             const _win_loc = window.location.pathname.split('/');
             const _lang = _win_loc[1];
             const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
@@ -473,8 +413,7 @@ ENTRY POINT
                 setTimeout(_naggerFunc, _nagDelay);
             };
             window.fetch(_api_base + _video_id).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
-        }
-    }
+    //}
 })();
 
 /* --- FUNCTIONS: decorating --- */
@@ -637,22 +576,6 @@ function createCreditsElement() {
     return credits;
 }
 
-function decoratePlayer360(videoElement, videoURL, videoName) {
-    let container = document.createElement('div');
-    insertAfter(container, videoElement);
-    container.setAttribute('class', 'ArteDownloader-v' + scriptVersion)
-    container.setAttribute('style', 'background:#262626; padding: 10px;');
-    let button = document.createElement('a');
-    button.innerHTML = "<strong>Download " + videoName + " </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
-    button.setAttribute('id', 'btnArteDownloader');
-    button.setAttribute('href', videoURL);
-    button.setAttribute('target', '_blank');
-    button.setAttribute('download', videoName);
-    button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
-    container.appendChild(button);
-}
-
 function buildContainer(videoElementIndex) {
     let container = document.createElement('div');
     container.setAttribute('id', 'video_' + videoElementIndex);
@@ -696,35 +619,4 @@ function buildContainer(videoElementIndex) {
     container.appendChild(credits);
 
     return container;
-}
-
-function decoratePlayer(videoElement, videoElementIndex) {
-    let parent = videoElement.parentNode;
-
-    // find parent to decorate
-    // @TODO: deco https://info.arte.tv/fr/litalie-veut-redonner-leur-identite-aux-refugies-noyes-en-mediterranee
-    if (videoElement.nodeName === "IFRAME" || window.frameElement !== null) {
-        // !hardcoded spaghetti, @TODO: find a better way to find parent
-        parent = window.parent.document.querySelector('div.video-embed');
-        if (parent == null) {
-            parent = window.parent.document.querySelector('div.next-video-playlist');
-            if ( parent == null ) {
-                parent = window.parent.document.querySelector('div.article-video');
-                if (parent == null) {
-                    parent = window.parent.document.querySelector('div.video-container');
-                    if (parent == null) {
-                        console.error("Couldn't find parent to decorate.");
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    var container = buildContainer(videoElement, videoElementIndex);
-    setTimeout( () => { insertAfter(container, parent); }, 3500); // !hardcoded, @TODO: callback after parent stops cleaning his childNodes
-
-    // Workaround decoration overlapping next SECTION
-    let parentSection = parent//getParent(parent, 'SECTION', 'margin-bottom-s'); //!hardcoded, @TODO: find a better way to find proper parent
-    parentSection.style.marginBottom = playerJson.length * 8 + "rem";
 }
