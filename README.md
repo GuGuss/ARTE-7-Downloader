@@ -8,7 +8,7 @@ ARTE-Downloader **3.5** [![Licence](https://img.shields.io/badge/License-GPLv3-b
 * [Disclaimer](#disclaimer)
 * [License](../master/LICENSE.md)
 
-A browser addon to offer download options on [Arte website](https://www.arte.tv/) videos.
+A browser addon to offer download options on [Arte website](https://www.arte.tv/)'s videos.
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
