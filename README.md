@@ -1,5 +1,5 @@
 ***
-ARTE-Downloader **3.4** [![Licence](https://img.shields.io/badge/License-GPLv3-blue.svg)](../master/LICENSE.md)
+ARTE-Downloader **3.5** [![Licence](https://img.shields.io/badge/License-GPLv3-blue.svg)](../master/LICENSE.md)
 =================
 * [Installation](#installation)
 * [FAQ](#faq)
