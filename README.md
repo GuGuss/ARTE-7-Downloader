@@ -8,7 +8,7 @@ ARTE-Downloader **3.5** [![Licence](https://img.shields.io/badge/License-GPLv3-b
 * [Disclaimer](#disclaimer)
 * [License](../master/LICENSE.md)
 
-A browser addon to offer download options under videos on [Arte website](https://www.arte.tv/).
+A browser addon to offer download options on [Arte website](https://www.arte.tv/) videos.
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
@@ -23,10 +23,10 @@ Chromium<br>(Chrome/Vivaldi/Brave) | **Step 1:** [get a script manager](https://
 
 FAQ
 ---
-**The video opens in a tab ?**
+***The video opens in a tab ?***
 Save it with ***CTRL+S***.
 
-**It won't work as intended ?**
+***It won't work as intended ?***
 Report your issue [here](../../issues).
 
 CONTRIBUTORS
