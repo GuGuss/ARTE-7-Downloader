@@ -1,13 +1,18 @@
 // ==UserScript==
 // @name        Arte+7 Downloader
 // @description Download videos or get stream link of ARTE programs in the selected language.
+// @version     3.5
+// @license     GPL
 // @include     https://*.arte.tv/*
-// @updateURL   https://raw.githubusercontent.com/GuGuss/ARTE-7-Downloader/master/src/arte-downloader.js
 // @icon        https://www.arte.tv/favicon.ico
+// @homepageURL https://github.com/GuGuss/ARTE-7-Downloader
+// @supportURL  https://github.com/GuGuss/ARTE-7-Downloader/issues
+// @downloadURL https://raw.githubusercontent.com/GuGuss/ARTE-7-Downloader/master/src/arte-downloader.js
+// @updateURL   https://raw.githubusercontent.com/GuGuss/ARTE-7-Downloader/master/src/arte-downloader.js
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-const scriptVersion = 3.4;
+const scriptVersion = 3.5;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -385,7 +390,6 @@ ENTRY POINT
             const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
             const _video_id = _win_loc[3];
             const _video_name = _win_loc[4];
-            const _anchor = document.querySelector('.video-thumbnail');
             const _maxNags = 20;
             const _nagDelay = 500;
             let _nagCounter = 0;
@@ -402,7 +406,10 @@ ENTRY POINT
                 if (_nagCounter < _maxNags) {
                     _nagCounter++;
                     if (!document.getElementById("cbLanguage0")) {
-                        _anchor.appendChild(buildContainer(0));
+                        let anchor = document.querySelector('main[role="main"]');
+                        console.debug(anchor);
+                        // insert before the player otherwise it gets overlayed by the player (@TODO find a way to place it below)
+                        anchor.insertBefore(buildContainer(0), anchor.firstChild);
                     }
                     setTimeout(_naggerFunc, _nagDelay);
                 }
@@ -436,7 +443,7 @@ function createButtonDownload(videoElementIndex, language) {
 
     // Check HTTP
     if (nbHTTP[videoElementIndex] > 0 && videoUrl.substring(videoUrl.length - 4, videoUrl.length) === ".mp4") {
-        button.innerHTML = "<strong>Download video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "<strong>📥 video </strong><span class='icomoon-angle-down force-icomoon-font'></span>";
     }
 
     // Check HTTP Live Stream
@@ -455,7 +462,7 @@ function createButtonDownload(videoElementIndex, language) {
     button.setAttribute('target', '_blank');
     button.setAttribute('download', getVideoName(videoElementIndex) + ".mp4");
     button.setAttribute('class', 'btn btn-default');
-    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding-top: 9px; padding-bottom: 9px; padding-left: 12px; padding-right: 12px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
+    button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;');
     return button;
 }
 
@@ -471,7 +478,7 @@ function createButtonMetadata(videoElementIndex) {
         let button = document.createElement('a');
         button.setAttribute('class', 'btn btn-default');
         button.setAttribute('style', 'line-height: 17px; margin-left:10px; text-align: center; padding: 10px; color:rgb(40, 40, 40);  background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px;');
-        button.innerHTML = "Download description <span class='icomoon-angle-down force-icomoon-font'></span>";
+        button.innerHTML = "📥 description <span class='icomoon-angle-down force-icomoon-font'></span>";
         let metadata = (title !== undefined ? "[Title]\n" + title:'')
             + (subtitle !== undefined ? "\n\n[Subtitle]\n" + subtitle:'')
             + (description_short !== undefined ? "\n\n[Description-short]\n" + description_short:'')
@@ -529,7 +536,7 @@ function createLanguageComboBox(videoElementIndex) {
     }
     languageComboBox.setAttribute('class', 'btn btn-default');
     languageComboBox.setAttribute('style', (languageComboBox.innerHTML === "" ? "visibility:hidden;"
-                                            : "max-width: 160px; padding: 6px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
+                                            : "max-width: 100px; padding: 10px; color:rgb(40, 40, 40); background-color: rgb(230, 230, 230); font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 13px; font-weight: 400;"));
     return languageComboBox;
 }
 
@@ -571,8 +578,7 @@ function createQualityComboBox(videoElementIndex) {
 function createCreditsElement() {
     let credits = document.createElement('div');
     credits.setAttribute('style', 'text-align: center; line-height: 20px; font-size: 11.2px; color: rgb(255, 255, 255); font-family: ProximaNova, Arial, Helvetica, sans-serif; padding: 5px; background:#262626');
-    credits.innerHTML = 'Arte Downloader v.' + scriptVersion + ' built by and for the community with love' +
-        '<br /><a style=\'color:rgb(255, 255, 255);\' href="https://github.com/GuGuss/ARTE-7-Downloader">Contribute Here.</a>';
+    credits.innerHTML = '<a style=\'color:rgb(255, 255, 255);\' href="https://github.com/GuGuss/ARTE-7-Downloader">Arte Downloader v. ' + scriptVersion + '</a>';
     return credits;
 }
 
