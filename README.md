@@ -8,7 +8,7 @@ ARTE-Downloader **3.5** [![Licence](https://img.shields.io/badge/License-GPLv3-b
 * [Disclaimer](#disclaimer)
 * [License](../master/LICENSE.md)
 
-A browser addon to offer download options on [Arte website](https://www.arte.tv/)'s videos.
+A browser addon to offer download options on [Arte.tv](https://www.arte.tv/)'s videos.
 
 * **Select** the language and the quality.
 * **Download** the video and its description.
@@ -16,17 +16,19 @@ A browser addon to offer download options on [Arte website](https://www.arte.tv/
 INSTALLATION
 ------------
 
-BROWSER | SCRIPT
--|-
-Firefox | **Step 1:** [get a script manager](https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/) <br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
-Chromium<br>(Chrome/Vivaldi/Brave) | **Step 1:** [get a script manager](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)<br>**Step 2:** [install the script!](../../raw/master/src/arte-downloader.js)
-
+* **Step 1:** install a userscript manager such as [ViolentMonkey](https://violentmonkey.github.io/get-it/#stable-release)
+* **Step 2:** copy [the script URL](../../raw/master/src/arte-downloader.js)
+* **Step 3:** go to ViolentMonkey dashboard > "+" > *Install from URL* > paste the link.
+ 
 FAQ
 ---
-***The video opens in a tab ?***
-Save it with ***CTRL+S***.
+***The video opens in a tab ?***<br>
+Save it with ***<ctrl+s>***
 
-***It won't work as intended ?***
+***How do i update the script ?***<br>
+Your userscript manager should take care of it on new versions. If not, [re-install manually](#installation).
+
+***It won't work as intended ?***<br>
 Report your issue [here](../../issues).
 
 CONTRIBUTORS
