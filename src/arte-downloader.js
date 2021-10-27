@@ -263,8 +263,9 @@ ENTRY POINT
             playerJson[0] = json;
             preParsePlayerJson(0);
             if (!document.getElementById("cbLanguage0")) {
-                let anchor = document.querySelector('main[role="main"]').firstChild;
+                let anchor = document.querySelector('main[role="main"]').firstChild.nextSibling.firstChild;
                 if (anchor != null && nbVideos[0] > 0) {
+                    console.log(anchor);
                     insertAfter(buildContainer(0), anchor);
                     console.log("> Success: exiting Arte Downloader.");
                 }
