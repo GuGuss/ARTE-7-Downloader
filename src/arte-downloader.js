@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Arte+7 Downloader
 // @description Download videos or get stream link of ARTE programs in the selected language.
-// @version     3.5
+// @version     3.6
 // @license     GPL
 // @include     https://*.arte.tv/*
 // @icon        https://www.arte.tv/favicon.ico
@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 /* --- GLOBAL VARIABLES --- */
-const scriptVersion = 3.5;
+const scriptVersion = 3.6;
 let playerJson;
 let nbVideos;
 let nbHTTP;
@@ -89,56 +89,59 @@ function preParsePlayerJson(videoElementIndex) {
     if (playerJson[videoElementIndex]) {
         let videos = Object.keys(playerJson[videoElementIndex].videoJsonPlayer.VSR);
         nbVideos[videoElementIndex] = videos.length;
+        if (nbVideos[videoElementIndex] > 0) {
+            // Loop through all videos URLs.
+            for (let key in videos) {
+                let video = playerJson[videoElementIndex].videoJsonPlayer.VSR[videos[key]];
 
-        // Loop through all videos URLs.
-        for (let key in videos) {
-            let video = playerJson[videoElementIndex].videoJsonPlayer.VSR[videos[key]];
+                // Check if video format or media type
+                if (video.videoFormat === "HBBTV" || video.mediaType === "mp4") {
+                    nbHTTP[videoElementIndex]++;
+                } else if (video.videoFormat === "M3U8" || video.mediaType === "hls") {
+                    nbHLS[videoElementIndex]++;
+                }
 
-            // Check if video format or media type
-            if (video.videoFormat === "HBBTV" || video.mediaType === "mp4") {
-                nbHTTP[videoElementIndex]++;
-            } else if (video.videoFormat === "M3U8" || video.mediaType === "hls") {
-                nbHLS[videoElementIndex]++;
+                addLanguage(videoElementIndex, video.versionCode, video.versionLibelle);
+                addQuality(videoElementIndex, (
+                    video.VQU !== undefined ? video.VQU : video.quality),
+                    video.height ? video.height
+                        + "p@" + Math.round(video.bitrate /1000*10) /10 + "Mbps (" // convert kbps > Mbps
+                        + Math.round(video.bitrate *1000/8/1024) + "kB/s)"         // convert kbps > kB/s
+                        : video.quality);
             }
 
-            addLanguage(videoElementIndex, video.versionCode, video.versionLibelle);
-            addQuality(videoElementIndex, (
-                video.VQU !== undefined ? video.VQU : video.quality),
-                video.height ? video.height
-                    + "p@" + Math.round(video.bitrate /1000*10) /10 + "Mbps (" // convert kbps > Mbps
-                    + Math.round(video.bitrate *1000/8/1024) + "kB/s)"         // convert kbps > kB/s
-                    : video.quality);
-        }
-
-        // Remove Apple HLS if HTTP available
-        if (nbHTTP[videoElementIndex] > 0) {
-            delete qualities[videoElementIndex].XS;
-            delete qualities[videoElementIndex].XQ;
-        }
-
-        // Reorder qualities
-        let sortedKeys = Object.keys(qualities[videoElementIndex]).sort(
-            function(a, b) {
-                // array of sorted keys
-                return qualities[videoElementIndex][b].split('@')[1].split('M')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('M')[0] * 1;
+            // Remove Apple HLS if HTTP available
+            if (nbHTTP[videoElementIndex] > 0) {
+                delete qualities[videoElementIndex].XS;
+                delete qualities[videoElementIndex].XQ;
             }
-        );
 
-        // Create new object to rearrange qualities according to new key order
-        let temp = new Object;
-        for (let i = 0; i < sortedKeys.length; i++) {
-            temp[sortedKeys[i]] = qualities[videoElementIndex][sortedKeys[i]];
-        }
-        qualities[videoElementIndex] = temp; // replace with new ordered object
+            // Reorder qualities
+            let sortedKeys = Object.keys(qualities[videoElementIndex]).sort(
+                function(a, b) {
+                    // array of sorted keys
+                    return qualities[videoElementIndex][b].split('@')[1].split('M')[0] * 1 - qualities[videoElementIndex][a].split('@')[1].split('M')[0] * 1;
+                }
+            );
 
-        // Display preparse info
-        console.log("\n====== player #" + videoElementIndex+1 + " ======\n> " +
-            nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " MP4 videos | " + nbHLS[videoElementIndex] + " streams.");
-        let languagesFound = "";
-        for (let l in languages[videoElementIndex]) {
-            languagesFound += "\n    - " + languages[videoElementIndex][l];
+            // Create new object to rearrange qualities according to new key order
+            let temp = new Object;
+            for (let i = 0; i < sortedKeys.length; i++) {
+                temp[sortedKeys[i]] = qualities[videoElementIndex][sortedKeys[i]];
+            }
+            qualities[videoElementIndex] = temp; // replace with new ordered object
+
+            // Display preparse info
+            console.log("\n====== player #" + videoElementIndex+1 + " ======\n> " +
+                nbVideos[videoElementIndex] + " formats: " + nbHTTP[videoElementIndex] + " MP4 videos | " + nbHLS[videoElementIndex] + " streams.");
+            let languagesFound = "";
+            for (let l in languages[videoElementIndex]) {
+                languagesFound += "\n    - " + languages[videoElementIndex][l];
+            }
+            console.log("> Languages:" + languagesFound);
+        } else {
+            console.warn("> No video found for player");
         }
-        console.log("> Languages:" + languagesFound);
     }
 }
 
@@ -248,179 +251,27 @@ ENTRY POINT
         };
         observer.observe(bodyList, config);
     }, false);
+        console.log("> Querying Arte API");
+        const _win_loc = window.location.pathname.split('/');
+        const _lang = _win_loc[1];
+        const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
+        const _video_id = _win_loc[3];
+        const _video_name = _win_loc[4];
 
-    // Check playlist
-    // @TODO parse inline script to find playlist link
-    // Find highlight of the day playlist
-    /*let scripts = document.querySelectorAll("script");
-    if (scripts !== undefined) {
-        let matchStringStart = "window.__INITIAL_STATE__ = ";
-        let matchStringEnd = "}]}]}";
-        for(let i=0; i < scripts.length; i++) {
-            let str = scripts[i].innerHTML.trim();
-            if (str.startsWith(matchStringStart)) {
-                str = str.split(matchStringStart)[1].split(matchStringEnd)[0] + matchStringEnd;
-                let inlineJson = JSON.parse(str);
-                inlineJson = inlineJson.pages.list["LIVE_fr_{}"].zones;
-                inlineJson.forEach( el => {
-                    if (el.code.name == "today_guide_LIVE") {
-                        inlineJson = el.data;
-                        console.debug(inlineJson);
-                    } 
-                });
-            }
-        }
-    }
-
-    let playlistJson = ...................................
-    if (playlistJson != null) {
-        playlistJson = unescape(playlistJson[1]);
-        console.log("> Found playlist json: " + playlistJson);
-
-        // Fetch playlist json
-        window.fetch(playlistJson).then(resp => resp.json()).then( jsonUrl => {
-            // Check for valid entry
-            if(typeof jsonUrl.videos !== "undefined" && typeof jsonUrl.videos[0] !== "undefined") {
-                let total = jsonUrl.videos.length;
-                initParsingSystem(total);
-                for (let i = 0; i < total; i++) {
-                    let videoJsonUrl = jsonUrl.videos[i].jsonUrl;
-                    videoJsonUrl = videoJsonUrl.replace(/\\/g, ''); // remove backslashes from the URL
-                    
-                    let videoElementIndex = i;
-                        console.log("    - #" + videoElementIndex + " player JSON: " + videoJsonUrl);
-                        let _cb = (json) => {
-                            playerJson[videoElementIndex] = json;
-                            preParsePlayerJson(videoElementIndex);
-                            // decorate playlist
-                        };
-                        window.fetch(videoJsonUrl).then((resp) => resp.json()).then(_cb);
-                    }
-
+        initParsingSystem(1);
+        let _cb = (json) => {
+            playerJson[0] = json;
+            preParsePlayerJson(0);
+            if (!document.getElementById("cbLanguage0")) {
+                let anchor = document.querySelector('main[role="main"]').firstChild;
+                if (anchor != null && nbVideos[0] > 0) {
+                    insertAfter(buildContainer(0), anchor);
+                    console.log("> Success: exiting Arte Downloader.");
                 }
 
-                // Wait recursively for each video downloaders to be created
-                let playlistSelector;
-                (function fetchDownloaders (i) {
-                    let videoDownloaders;
-                    setTimeout( () => {
-                        videoDownloaders = parent.document.querySelectorAll('div[id^=video_]');
-
-                        // when each have been created
-                        if (videoDownloaders.length == total) {
-
-                            // Create a playlist selector
-                            console.log("\n===== PLAYLIST ======");
-                            console.log("> Creating playlist selector.");
-                            let container = document.createElement('div');
-                            let span = document.createElement('span');
-                            span.innerHTML = '<strong>Select video to download</strong>';
-                            span.setAttribute('style', "margin-top: 10px; padding: 10px; max-width: 720px; color:white; font-family: ProximaNova,Arial,Helvetica,sans-serif; font-size: 16px;");
-                            container.appendChild(span);
-                            let cbVideoSelector = document.createElement('select');
-                            container.appendChild(cbVideoSelector);
-                            cbVideoSelector.setAttribute('id', 'playlistSelector');
-                            cbVideoSelector.setAttribute('style', "margin-top: 10px; padding: 10px; max-width: 720px;");
-                            cbVideoSelector.onchange = () => {
-                                // hide others
-                                parent.document.querySelectorAll('div[id^=video_]').forEach( el => {
-                                    el.style.visibility = "hidden";
-                                    el.style.height = "0px";
-                                    el.style.padding = "0px";
-                                    el.style.margin = "0px";
-                                    el.style.lineHeight = "0px";
-                                    el.style.visibility = "hidden"
-                                });
-
-                                let selection = cbVideoSelector.options[cbVideoSelector.selectedIndex].value;
-                                let downloader = parent.document.getElementById(selection);
-                                downloader.style.visibility = "visible";
-                                downloader.style.height = "7rem";
-                                downloader.style.padding = "10px";
-                                downloader.style.margin = "10px";
-                                downloader.style.lineHeight = "1.5";
-                                insertAfter(downloader, cbVideoSelector);
-                                console.log("> Selected downloader for " + selection);
-                            };
-
-                            // Hide each downloader to only display the current selected by the playlist selector
-                            videoDownloaders.forEach( (el, i) => {
-                                el.style.visibility = "hidden";
-                                el.style.height = "0px";
-                                el.style.padding = "0px";
-                                el.style.margin = "0px";
-                                el.style.lineHeight = "0px";
-                                el.style.visibility = "hidden"
-                                let id = "video_" + i;
-                                cbVideoSelector.innerHTML += "<option value='" + id + "'>" + parent.document.getElementById(id).firstChild.firstChild.innerHTML + "</option>";
-                            });
-                            videoDownloaders[0].parentNode.insertBefore(container, videoDownloaders[0]);
-                        } else {
-                            if (--i) {
-                                fetchDownloaders(i);
-                            } else {
-                                console.log("===== PLAYLIST ======");
-                                if (videoDownloaders.length !== total) {
-                                    console.warn("Not every video downloaders were created: " + videoDownloaders.length + "/" + total);
-                                }
-                            }
-                        }
-                    }, 1000)
-                })(10);
             }
-        });
-    }
-
-    // else deal w/ single video players
-    else {*/
-            // @XXX
-            // Think of a more clever way to trigger/retrigger this,
-            // because ARTE.tv is now hip and uses some clever way to
-            // load data incrementally and not only on real page-loads
-            // so this is sometimes broken - but works,
-            // if you force a browser reload (either via F5 or CTRL+R ..)
-            //
-            // So we need to keep track of that in the future,
-            // somehow.. IDK
-            //
-            // - Walialu, 2019-09-04 18:12 +0200
-            console.log("> Querying Arte API");
-            const _win_loc = window.location.pathname.split('/');
-            const _lang = _win_loc[1];
-            const _api_base = "https://api.arte.tv/api/player/v1/config/" + _lang + "/";
-            const _video_id = _win_loc[3];
-            const _video_name = _win_loc[4];
-            const _maxNags = 20;
-            const _nagDelay = 500;
-            let _nagCounter = 0;
-
-            initParsingSystem(1);
-            // This is because some weird shit is causing redraws on the ARTE.tv site
-            // probably whatever frontend-framework is currently hyped on hackernews
-            //
-            // So we force our UI to be drawn up to (_maxNags*_nagDelay) seconds
-            // if it does not exist, yet!
-            //
-            // - Walialu, 2019-09-04 17:17 +0200
-            const _naggerFunc = () => {
-                if (_nagCounter < _maxNags) {
-                    _nagCounter++;
-                    if (!document.getElementById("cbLanguage0")) {
-                        let anchor = document.querySelector('main[role="main"]');
-                        console.debug(anchor);
-                        // insert before the player otherwise it gets overlayed by the player (@TODO find a way to place it below)
-                        anchor.insertBefore(buildContainer(0), anchor.firstChild);
-                    }
-                    setTimeout(_naggerFunc, _nagDelay);
-                }
-            };
-            let _cb = (json) => {
-                playerJson[0] = json;
-                preParsePlayerJson(0);
-                setTimeout(_naggerFunc, _nagDelay);
-            };
-            window.fetch(_api_base + _video_id).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
-    //}
+        };
+        window.fetch(_api_base + _video_id).then((resp) => resp.json()).then(_cb).catch((err) => console.error(err));
 })();
 
 /* --- FUNCTIONS: decorating --- */
